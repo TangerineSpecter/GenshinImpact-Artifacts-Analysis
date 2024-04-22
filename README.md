@@ -13,7 +13,7 @@
 
 <p align="center">
     <a href="#">
-        <img src="https://img.shields.io/badge/StarRail Auto Tools-0.0.1-green.svg" alt="HuTaoWallet version">
+        <img src="https://img.shields.io/badge/StarRail Auto Tools-1.0.0-green.svg" alt="HuTaoWallet version">
     </a>        
     <a href="#">
         <img src="https://img.shields.io/badge/Python-3.11.6-green.svg" alt="Vue Version">
@@ -37,7 +37,7 @@
 
 ## 当前系统版本
 ```
-0.0.1
+1.0.0
 ```
 
 ## 相关技术
@@ -46,7 +46,6 @@
 | --  | -- |
 | Python | 3.11.6 |
 | opencv | 4.6.0.66 |
-| paddleocr | 2.6.0 |
 | pyside6 | 6.6.2 |
 | pyautogui | 0.9.54 |
 | keyboard | 0.13.5 |

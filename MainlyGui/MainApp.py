@@ -185,7 +185,7 @@ class MainApp(object):
         self.textLabel.setStyleSheet("color: red;")
         self.textLabel.setText(
             QCoreApplication.translate("MainWindow",
-                                       f"说明：当前版本暂不支持启动游戏运行，请在进入游戏后通过快捷键运行脚本。^_^", None))
+                                       f"说明：扫描圣遗物请打开到背包圣遗物界面后执行。^_^", None))
         pass
 
     def __initLayout(self, MainWindow):
