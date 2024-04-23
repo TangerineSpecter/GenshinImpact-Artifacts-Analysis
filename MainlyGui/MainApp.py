@@ -353,7 +353,7 @@ class MainApp(object):
 
         select_data = select_data_list[0].data()
         tableData = self.tableData
-        if select_data in tableData:
+        if tableData and select_data in tableData:
             QMessageBox.information(self.centralWidget, '提示', '角色已存在', QMessageBox.Ok)
             return
         # # 初始化表格数据
