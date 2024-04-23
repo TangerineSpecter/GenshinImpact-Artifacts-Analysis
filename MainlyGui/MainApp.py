@@ -26,6 +26,7 @@ import Config.LoggingConfig as Logging
 import Config.UpdateLog as UpdateInfo
 import Utils.DataUtils as Data
 import Utils.Constant as Constant
+from Utils.ExcelUtils import export_artifact_data
 
 # 系统信息
 systemInfo = SystemInfo.base_info
@@ -92,14 +93,14 @@ class MainApp(object):
         self.analysisBtn = QPushButton(self.centralWidget)
         self.analysisBtn.setObjectName(u"analysisBtn")
         self.analysisBtn.setGeometry(QRect(1130, 150, 80, 40))
-        self.analysisBtn.clicked.connect(show_log)
+        self.analysisBtn.clicked.connect(show_analysis)
         self.analysisBtn.setText(QCoreApplication.translate("MainWindow", "分析", None))
 
         # 导出
         self.exportBtn = QPushButton(self.centralWidget)
         self.exportBtn.setObjectName(u"exportBtn")
         self.exportBtn.setGeometry(QRect(1130, 220, 80, 40))
-        self.exportBtn.clicked.connect(show_log)
+        self.exportBtn.clicked.connect(self.export_excel)
         self.exportBtn.setText(QCoreApplication.translate("MainWindow", "导出", None))
 
         # 同步
@@ -291,6 +292,20 @@ class MainApp(object):
         self.settingItemBtn.setToolTip("修改选中任务内容以及次数")
         self.removeItemBtn.setToolTip("对选中任务进行移除")
         self.analysisBtn.setToolTip("进行圣遗物推荐分析")
+
+    def export_excel(self):
+        """
+        导出excel数据
+        """
+        data = [
+            ["哈哈哈", "胡桃", "测试1", "测试2", "测试3", "哈哈哈"],
+            ["胡桃", "测试1", "测试2", "测试3", "哈哈哈", "胡桃",
+             "测试1", "测试2", "测试3"
+             ]]
+        try:
+            export_artifact_data(data)
+        except Exception as e:
+            QMessageBox.information(self.centralWidget, '提示', f"{e.__cause__}", QMessageBox.Ok)
 
     def open_file(self):
         """
@@ -511,6 +526,16 @@ def show_log():
     sub_window.exec()
 
 
+def show_analysis():
+    """
+    打开分析界面
+    """
+    sub_window = SubAnalysisWindow()
+    # 设置为模态对话框
+    sub_window.setModal(True)
+    sub_window.exec()
+
+
 class SubLogWindow(QDialog):
     def __init__(self):
         super().__init__()
@@ -525,7 +550,23 @@ class SubLogWindow(QDialog):
         # 设置为不可编辑
         self.textEdit.setReadOnly(True)
         layout.addWidget(self.textEdit)
+        self.setLayout(layout)
 
+
+class SubAnalysisWindow(QDialog):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("圣遗物分析")
+
+        layout = QVBoxLayout()
+        self.textEdit = QTextEdit()
+        self.textEdit.setStyleSheet("background-color: rgb(20, 23, 40);")
+        log_content = FileOper.load_log_file("app.log")
+        self.textEdit.setHtml(log_content)
+        self.textEdit.setFixedSize(1000, 400)
+        # 设置为不可编辑
+        self.textEdit.setReadOnly(True)
+        layout.addWidget(self.textEdit)
         self.setLayout(layout)
 
 

@@ -1,5 +1,7 @@
 import json
 import os
+import platform
+import subprocess
 import sys
 
 import Config.LoggingConfig as Logging
@@ -93,6 +95,29 @@ class FileOper:
             template = f"<span style='font-size:14px;font-family:Courier;'>{log}</span>"
             result.append(template)
         return "".join(result)
+
+    @staticmethod
+    def open_dir(dir_path):
+        """
+        打开文件目录
+        :param 目录路径
+        """
+        current_system = platform.system()
+        if current_system == 'Windows':
+            os.system(f"explorer {dir_path}")
+        elif current_system == 'Darwin':
+            subprocess.run(['open', dir_path])
+
+    @staticmethod
+    def get_dir(dir_path):
+        """
+        获取目录地址（无则创建）
+        :param dir_path 目录地址
+        :return 目录地址
+        """
+        if not os.path.exists(dir_path):
+            os.makedirs(dir_path)
+        return dir_path
 
 
 if __name__ == '__main__':

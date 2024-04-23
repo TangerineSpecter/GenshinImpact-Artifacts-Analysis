@@ -5,6 +5,16 @@ Excel工具类
 from openpyxl.styles import Alignment, PatternFill, Border, Side, Font
 from openpyxl.workbook import Workbook
 
+import Utils.Constant as Constant
+import Utils.DataUtils as Data
+from Utils.FileUtils import FileOper
+
+
+# 定义自定义异常类
+class CustomError(Exception):
+    def __init__(self, message):
+        self.message = message
+
 
 def apply_format(cell, is_header):
     font = Font(name="LXGWWenKaiGBScreen", size=14, color="000000", bold=False) if not is_header else Font(
@@ -52,13 +62,12 @@ def export_artifact_data(data_list):
             is_header = cell.row == 1
             apply_format(cell, is_header)
 
+    config_dir = Data.settings.value("config_dir")
+    if not config_dir:
+        raise CustomError("未设置本地数据目录")
+
+    target_dir = FileOper.get_dir(f"{config_dir}/{Constant.out_dir}")
+
     # 将工作簿保存到磁盘
-    wb.save('圣遗物数据.xlsx')
-
-
-if __name__ == '__main__':
-    data = [
-        ["哈哈哈", "胡桃", "测试1", "测试2", "测试3", "哈哈哈"], ["胡桃", "测试1", "测试2", "测试3", "哈哈哈", "胡桃",
-                                                                  "测试1", "测试2", "测试3"
-                                                                  ]]
-    export_artifact_data(data)
+    wb.save(f'{target_dir}/圣遗物数据.xlsx')
+    FileOper.open_dir(target_dir)
