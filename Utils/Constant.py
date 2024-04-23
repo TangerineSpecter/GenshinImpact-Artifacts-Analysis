@@ -13,3 +13,7 @@ stop_keyboard = "shift + f"
 
 # 圣遗物存放目录
 artifact_dir = "artifact"
+# 配置数据存放目录
+conf_dir = "conf"
+# 图片目录
+img_dir = "img"

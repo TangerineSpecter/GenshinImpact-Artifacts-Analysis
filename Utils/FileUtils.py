@@ -2,6 +2,8 @@ import json
 import os
 import sys
 
+import Config.LoggingConfig as Logging
+
 # 日志级别字典
 level_color_dict = {
     "DEBUG": "rgb(64, 126, 210)",
@@ -45,6 +47,26 @@ class FileOper:
         if reverse:
             content.reverse()
         return "".join(content)
+
+    @staticmethod
+    def save_file(folder_path, filename, data):
+        """
+        保存文件
+        :param folder_path 文件目录
+        :param filename 文件名
+        :param data 文件数据
+        """
+        if not os.path.exists(folder_path):
+            os.makedirs(folder_path)
+
+        file_path = f"{folder_path}/{filename}"
+        try:
+            with open(file_path, 'w', encoding='utf-8') as target_file:
+                json.dump(data, target_file, indent=4, ensure_ascii=False)
+                target_file.close()
+                # print("文件写入完毕")
+        except Exception as e:
+            Logging.error(f"文件保存失败: {e.__cause__}")
 
     @staticmethod
     def load_log_file(filename):

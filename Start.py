@@ -2,6 +2,7 @@
 # Import PseudoSensor
 # Import system tools and datetime
 import sys
+import time
 
 import pyautogui
 from PySide6.QtCore import Qt, Signal, QRect
@@ -12,7 +13,6 @@ import Config.LoggingConfig as Logging
 import Utils.DataUtils as Data
 # Import UI developed in Qt Creator
 from MainlyGui.MainApp import MainApp  # 导入界面
-import time
 
 
 # Create and start the Qt application
@@ -59,7 +59,7 @@ if __name__ == "__main__":
     start_time = time.time()
     # 初始化QApplication
     app = QApplication()
-    app.setWindowIcon(QIcon(Data.getResourcePath("Resource/img/icon.png")))
+    app.setWindowIcon(QIcon(Data.get_resource_path("Resource/img/icon.png")))
     app.setStyleSheet(
         """
         /* 全局样式表，设置窗体背景为白色 */

@@ -8,8 +8,11 @@ from PySide6.QtCore import QThread, Signal
 import Config.LoggingConfig as Logging
 import Utils.Constant as Constant
 import Utils.DataUtils as Data
-import win32gui
-import win32process
+import platform
+
+if platform.system() == 'Windows':
+    import win32gui
+    import win32process
 import Utils.ImageUtils as ImageUtils
 
 
@@ -115,7 +118,7 @@ class Strategy(QThread):
 
         # 开始识别
         start = time.time()
-        total_count = 0;
+        total_count = 0
         # 一页40个，按照最大50页执行扫描
         for page in range(50):
             # 5行

@@ -1,6 +1,27 @@
 class BtnCss:
 
     @staticmethod
+    def white(btnObj):
+        """蓝色按钮样式
+        :param btnObj 按钮对象
+        """
+        btnObj.setStyleSheet(
+            """
+            QPushButton {
+                background-color: white;
+                border: 1px solid #dcdfe6;
+                color: #606266;
+                padding: 5px 10px;
+                border-radius: 5px;
+            }
+            QPushButton:hover {
+                background-color: #ecf5ff;
+                border: 1px solid #c6e2ff;
+            }
+            """
+        )
+
+    @staticmethod
     def blue(btnObj):
         """蓝色按钮样式
         :param btnObj 按钮对象

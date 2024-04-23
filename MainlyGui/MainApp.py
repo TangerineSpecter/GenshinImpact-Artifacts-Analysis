@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
-import json
 import platform
-import re
 
-import requests
 from PySide6.QtCore import (QCoreApplication, QMetaObject, QRect, QStringListModel, Qt)
 from PySide6.QtGui import (QAction, QIcon)
 from PySide6.QtWidgets import (QGridLayout, QMenu, QFileDialog, QTableWidget, QListView, QGroupBox,
@@ -21,6 +18,7 @@ from PySide6.QtWidgets import (QGridLayout, QMenu, QFileDialog, QTableWidget, QL
 if platform.system() == 'Windows':
     from Moudles.KeyboardModule import KeyboardModule
 from Strategy.MainStrategy import Strategy
+from Strategy.SyncStrategy import SyncJob
 from Utils.CssUtils import (BtnCss)
 from Utils.FileUtils import FileOper
 import Config.SystemInfo as SystemInfo
@@ -41,7 +39,7 @@ class MainApp(object):
         # 初始化窗体基本信息
         MainWindow.setObjectName(u"MainWindow")
         MainWindow.setFixedSize(1240, 500)
-        MainWindow.setWindowIcon(QIcon(Data.getResourcePath(Constant.icon)))
+        MainWindow.setWindowIcon(QIcon(Data.get_resource_path(Constant.icon)))
         MainWindow.setWindowTitle(
             QCoreApplication.translate("MainWindow", f"{systemInfo['title']} v{systemInfo['version']}", None))
 
@@ -134,16 +132,8 @@ class MainApp(object):
         self.removeItemBtn.setText(QCoreApplication.translate("MainWindow", "移除", None))
 
     def __syncData(self):
-        """
-        同步数据
-        """
-        roleList = get_role_list()
-        if roleList:
-            model = QStringListModel()
-            name_list = [item['name'] for item in roleList]
-            model.setStringList(name_list)
-            self.listView.setModel(model)
-            Data.settings.setValue("role_list", name_list)
+        QMessageBox.information(self.centralWidget, '提示', '开始同步数据，请稍等...', QMessageBox.Ok)
+        self.syncJob.start()
 
     def __initLabel(self):
         """
@@ -281,15 +271,16 @@ class MainApp(object):
         BtnCss.blue(self.startGameBtn)
         BtnCss.purple(self.analysisBtn)
         BtnCss.green(self.exportBtn)
+        BtnCss.white(self.syncBtn)
         # icon设置
-        self.addItemBtn.setIcon(QIcon(Data.getResourcePath("Resource/icon/add.png")))
-        self.settingItemBtn.setIcon(QIcon(Data.getResourcePath("Resource/icon/setting.png")))
-        self.removeItemBtn.setIcon(QIcon(Data.getResourcePath("Resource/icon/remove.png")))
-        self.openFileBtn.setIcon(QIcon(Data.getResourcePath("Resource/icon/file.png")))
-        self.analysisBtn.setIcon(QIcon(Data.getResourcePath("Resource/icon/log.png")))
-        self.startGameBtn.setIcon(QIcon(Data.getResourcePath("Resource/icon/start.png")))
-        self.exportBtn.setIcon(QIcon(Data.getResourcePath("Resource/icon/export.png")))
-        self.syncBtn.setIcon(QIcon(Data.getResourcePath("Resource/icon/sync.png")))
+        self.addItemBtn.setIcon(QIcon(Data.get_resource_path("Resource/icon/add.png")))
+        self.settingItemBtn.setIcon(QIcon(Data.get_resource_path("Resource/icon/setting.png")))
+        self.removeItemBtn.setIcon(QIcon(Data.get_resource_path("Resource/icon/remove.png")))
+        self.openFileBtn.setIcon(QIcon(Data.get_resource_path("Resource/icon/file.png")))
+        self.analysisBtn.setIcon(QIcon(Data.get_resource_path("Resource/icon/log.png")))
+        self.startGameBtn.setIcon(QIcon(Data.get_resource_path("Resource/icon/start.png")))
+        self.exportBtn.setIcon(QIcon(Data.get_resource_path("Resource/icon/export.png")))
+        self.syncBtn.setIcon(QIcon(Data.get_resource_path("Resource/icon/sync.png")))
 
     def __init_tips(self):
         """
@@ -435,8 +426,21 @@ class MainApp(object):
         return
 
     def changeStatusLabel(self, text):
+        """
+        状态红字描述刷新
+        """
         self.changeOut.emit(text)
         return
+
+    def refreshData(self):
+        """
+        刷新窗口数据
+        """
+        role_list = Data.settings.value("role_list")
+        if role_list:
+            model = QStringListModel()
+            model.setStringList(role_list)
+            self.listView.setModel(model)
 
     def __initData(self):
         """
@@ -477,7 +481,7 @@ class MainApp(object):
             self.addTableItem(self.tableData, rowCount=(len(self.tableData) // len(headers)))
 
         # 加载设置
-        config_dir = Data.settings.value("game_path", None)
+        config_dir = Data.settings.value("config_dir", None)
         if config_dir is not None:
             self.gamePathText.setText(config_dir)
 
@@ -485,6 +489,10 @@ class MainApp(object):
         self.worker = Strategy()
         self.worker.sinOut.connect(self.showMsg)
         self.worker.statusOut.connect(self.changeStatusLabel)
+        # 同步任务
+        self.syncJob = SyncJob()
+        self.syncJob.statusOut.connect(self.setStatusText)
+        self.syncJob.refreshOut.connect(self.refreshData)
 
 
 class AboutDialog(QMessageBox):
@@ -563,43 +571,3 @@ class SubUpdateWindow(QDialog):
         layout.addWidget(self.textEdit)
 
         self.setLayout(layout)
-
-
-def get_desc(pattern, ext_json):
-    match = re.search(pattern, ext_json)
-    if match:
-        return match.group(1)
-    else:
-        return None
-
-
-def get_role_list():
-    """
-    获取原神角色数据列表
-    :return 角色数据
-    """
-    result = []
-    ROLE_DATA_URL = "https://api-static.mihoyo.com/common/blackboard/ys_obc/v1/home/content/list?app_sn=ys_obc&channel_id=189";
-    # 发起HTTP GET请求获取JSON数据
-    response = requests.get(ROLE_DATA_URL)
-    jsonData = response.text
-
-    # 解析JSON数据
-    data = json.loads(jsonData)
-    roleList = data["data"]["list"][0]["children"][0]["list"]
-    for role in roleList:
-        name = role['title']
-        if "预告" in name:
-            continue
-        ext_json = role['ext']
-        # 设置元素、地区、武器信息
-        element = get_desc(r"\"元素/(.*?)\\\"", ext_json)
-        region = get_desc(r"\"地区/(.*?)\\\"", ext_json)
-        arms = get_desc(r"\"武器/(.*?)\\\"", ext_json)
-        result.append({
-            "name": name,
-            "element": element,
-            "region": region,
-            "arms": arms
-        })
-    return result
