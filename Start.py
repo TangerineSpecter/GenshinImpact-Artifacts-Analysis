@@ -4,7 +4,6 @@
 import sys
 import time
 
-import pyautogui
 from PySide6.QtCore import Qt, Signal, QRect
 from PySide6.QtGui import (QIcon, QFont)
 from PySide6.QtWidgets import *
@@ -81,17 +80,8 @@ if __name__ == "__main__":
         """
     )
 
-    label_window = StatusLabel()
-
     # 初始化界面并显示界面
     window = MainWindow()
-    window.changeOut.connect(label_window.update_text)
     window.show()
-
-    # 获取屏幕的宽度和高度
-    screen_width, screen_height = pyautogui.size()
-
-    # 设置label的位置为屏幕的右上角
-    label_window.move((screen_width - label_window.width()) / 2, 0)
     print(f"初始化完毕，耗时{time.time() - start_time}秒")
     sys.exit(app.exec())

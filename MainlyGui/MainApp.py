@@ -34,7 +34,6 @@ systemInfo = SystemInfo.base_info
 class MainApp(object):
 
     def __init__(self, MainWindow):
-        self.changeOut = MainWindow.changeOut
         Logging.info("启动应用程序")
         # 初始化窗体基本信息
         MainWindow.setObjectName(u"MainWindow")
@@ -425,13 +424,6 @@ class MainApp(object):
         QMessageBox.information(self.centralWidget, '提示', text, QMessageBox.Ok)
         return
 
-    def changeStatusLabel(self, text):
-        """
-        状态红字描述刷新
-        """
-        self.changeOut.emit(text)
-        return
-
     def refreshData(self):
         """
         刷新窗口数据
@@ -488,7 +480,6 @@ class MainApp(object):
         # 线程创建
         self.worker = Strategy()
         self.worker.sinOut.connect(self.showMsg)
-        self.worker.statusOut.connect(self.changeStatusLabel)
         # 同步任务
         self.syncJob = SyncJob()
         self.syncJob.statusOut.connect(self.setStatusText)

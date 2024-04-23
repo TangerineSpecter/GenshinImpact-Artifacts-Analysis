@@ -1,4 +1,5 @@
 import os
+import platform
 import time
 
 import psutil
@@ -8,7 +9,6 @@ from PySide6.QtCore import QThread, Signal
 import Config.LoggingConfig as Logging
 import Utils.Constant as Constant
 import Utils.DataUtils as Data
-import platform
 
 if platform.system() == 'Windows':
     import win32gui
@@ -18,7 +18,6 @@ import Utils.ImageUtils as ImageUtils
 
 class Strategy(QThread):
     sinOut = Signal(str)
-    statusOut = Signal(str)
 
     def __init__(self):
         super(Strategy, self).__init__()
@@ -49,19 +48,16 @@ class Strategy(QThread):
 
     def stop(self):
         Logging.warn("终止脚本运行")
-        self.statusOut.emit("手动停止脚本")
         self.terminate()
 
     def run_game(self):
         try:
-            self.statusOut.emit("开始检测游戏运行状态")
             Logging.info("开始检测游戏运行状态")
             if check_process_exists():
                 Logging.info("游戏已运行，执行下一步")
                 self.__init_window()
             else:
                 self.sinOut.emit("游戏未运行")
-                self.statusOut.emit("脚本运行结束")
                 Logging.info("游戏未运行，终止")
                 return
         except Exception as e:
@@ -69,7 +65,6 @@ class Strategy(QThread):
 
         Logging.info("脚本运行结束")
         self.sinOut.emit("脚本运行结束")
-        self.statusOut.emit("脚本运行结束")
 
     def __run_table_data(self):
         """
