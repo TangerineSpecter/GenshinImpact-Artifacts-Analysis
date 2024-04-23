@@ -104,7 +104,7 @@ class FileOper:
         """
         current_system = platform.system()
         if current_system == 'Windows':
-            os.system(f"explorer {dir_path}")
+            os.system(f"explorer {dir_path}".replace("/", "\\"))
         elif current_system == 'Darwin':
             subprocess.run(['open', dir_path])
 

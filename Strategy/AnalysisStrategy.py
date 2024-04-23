@@ -27,18 +27,18 @@ class AnalysisJob(QThread):
         # 获取文本编辑框的文本内容
         self.appendOut.emit("<span style='color: rgb(86, 177, 110);'>开始分析...</span>")
         self.appendOut.emit("<span style='color: rgb(86, 177, 110);'>开始分析...</span>")
-        total_count = 30
+        total_count = 300
         for count in range(total_count):
             # 计算当前数字在总数中的比例
             progress = count / total_count
             # 计算对应的count值
-            index = int(progress * 30) + 1
+            index = int(progress * 50) + 1
             # 构建进度条字符串
-            fill_blank = '&nbsp;' * (120 - (4 * index))
-            progress_bar = f"<span style='color: rgb(114, 173, 51);'>[ {('█' * index)}{fill_blank} ]</span>" \
+            fill_blank = '&nbsp;' * (100 - (2 * index))
+            progress_bar = f"<span style='color: rgb(114, 173, 51);'>[ {('━' * index)}{fill_blank} ]</span>" \
                            f"<span style='color: rgb(209, 89, 82);'>&nbsp;&nbsp;分析进度：{count + 1} / {total_count}</span>"
             self.replaceOut.emit(progress_bar)
-            time.sleep(1)
+            time.sleep(0.2)
 
         # text = self.textEdit.toHtml()
         # self.textEdit.append("<span style='color: rgb(86, 177, 110);'>0</span> " + text)
