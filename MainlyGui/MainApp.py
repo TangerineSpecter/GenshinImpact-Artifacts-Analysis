@@ -7,6 +7,8 @@ from PySide6.QtWidgets import (QGridLayout, QMenu, QFileDialog, QTableWidget, QL
                                QMenuBar, QWidget, QMessageBox, QPushButton, QTextEdit, QLabel, QVBoxLayout,
                                QTableWidgetItem, QHeaderView, QAbstractItemView, QStatusBar, QDialog)
 
+from Strategy.AnalysisStrategy import AnalysisJob
+
 ################################################################################
 ## Form generated from reading UI file 'StarRail.ui'
 ##
@@ -554,20 +556,62 @@ class SubLogWindow(QDialog):
 
 
 class SubAnalysisWindow(QDialog):
+
     def __init__(self):
         super().__init__()
+        self.analysisJob = None
+        self.is_job_running = False
         self.setWindowTitle("圣遗物分析")
 
         layout = QVBoxLayout()
         self.textEdit = QTextEdit()
         self.textEdit.setStyleSheet("background-color: rgb(20, 23, 40);")
-        log_content = FileOper.load_log_file("app.log")
-        self.textEdit.setHtml(log_content)
+        # self.textEdit.setHtml(log_content)
         self.textEdit.setFixedSize(1000, 400)
         # 设置为不可编辑
         self.textEdit.setReadOnly(True)
         layout.addWidget(self.textEdit)
+
+        self.analysisBtn = QPushButton()
+        self.analysisBtn.setObjectName(u"openFileBtn")
+        self.analysisBtn.setGeometry(QRect(530, 10, 80, 40))
+        self.analysisBtn.clicked.connect(lambda: self.analysis_data())
+        self.analysisBtn.setText(QCoreApplication.translate("MainWindow", "分析", None))
+        layout.addWidget(self.analysisBtn)
         self.setLayout(layout)
+
+    def append_text(self, text):
+        self.textEdit.append(text)
+
+    def replace_text(self, new_line):
+        # 获取当前HTML内容
+        html_content = self.textEdit.toHtml()
+
+        # 分割HTML内容为行
+        lines = html_content.split('</p>')
+
+        # 替换最后一行内容
+        lines[-2] = new_line
+
+        # 重新设置HTML内容
+        new_html_content = '</p>'.join(lines)
+        self.textEdit.setHtml(new_html_content)
+
+    def analysis_data(self):
+        if self.is_job_running:
+            QMessageBox.information(self, '提示', '分析任务执行中，请勿重复执行任务', QMessageBox.Ok)
+            return
+        # 执行前，清空上一次的记录
+        self.textEdit.clear()
+        self.analysisJob = AnalysisJob()
+        self.analysisJob.appendOut.connect(self.append_text)
+        self.analysisJob.replaceOut.connect(self.replace_text)
+        self.analysisJob.finishOut.connect(self.job_finish)
+        self.analysisJob.start()
+        self.is_job_running = True
+
+    def job_finish(self):
+        self.is_job_running = False
 
 
 def show_update_log():
