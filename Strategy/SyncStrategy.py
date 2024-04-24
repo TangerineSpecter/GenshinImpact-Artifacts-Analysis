@@ -37,6 +37,14 @@ class SyncJob(QThread):
             FileOper.save_file(f"{config_dir}/{Constant.conf_dir}", "artifact-data.json", artifact_list)
             self.statusOut.emit("本地配置文件同步完成")
 
-        self.statusOut.emit("开始同步背包圣遗物数据")
+        artifact_list = FileOper.load_config_file(f"{config_dir}/{Constant.data_dir}/artifact_data.json")
+        self.analysis_artifact_data(artifact_list)
         self.statusOut.emit("数据同步完成")
         self.refreshOut.emit()
+
+    def analysis_artifact_data(self, artifact_list):
+        # TODO 数据入库
+        self.statusOut.emit("开始同步背包圣遗物数据")
+        if artifact_list:
+            return
+        print(len(artifact_list))

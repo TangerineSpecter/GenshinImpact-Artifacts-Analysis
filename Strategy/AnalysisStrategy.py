@@ -2,6 +2,11 @@ import time
 
 from PySide6.QtCore import QThread, Signal
 
+import Utils.DataUtils as Data
+from Utils import Constant
+from Utils.FileUtils import FileOper
+from Utils.ExcelUtils import export_artifact_data
+
 
 class AnalysisJob(QThread):
     # 追加内容信号
@@ -18,51 +23,47 @@ class AnalysisJob(QThread):
         """
         分析数据
         """
-        # TODO 分析打印待实现
-        # self.textEdit.setHtml("<span style='color: rgb(86, 177, 110);'>组件加载中...</span> ")
-        self.appendOut.emit("<span style='color: rgb(86, 177, 110);'>组件加载中...</span>")
+        # TODO 分析打印待实现  ━ 605.3/605.3 kB 787.7 kB/s eta 0:00:00
+        try:
+            self.appendOut.emit("<span style='color: rgb(86, 177, 110);'>组件加载中...</span>")
 
-        time.sleep(1)
+            time.sleep(1)
 
-        # 获取文本编辑框的文本内容
-        self.appendOut.emit("<span style='color: rgb(86, 177, 110);'>开始分析...</span>")
-        self.appendOut.emit("<span style='color: rgb(86, 177, 110);'>开始分析...</span>")
-        total_count = 300
-        for count in range(total_count):
-            # 计算当前数字在总数中的比例
-            progress = count / total_count
-            # 计算对应的count值
-            index = int(progress * 50) + 1
-            # 构建进度条字符串
-            fill_blank = '&nbsp;' * (100 - (2 * index))
-            progress_bar = f"<span style='color: rgb(114, 173, 51);'>[ {('━' * index)}{fill_blank} ]</span>" \
-                           f"<span style='color: rgb(209, 89, 82);'>&nbsp;&nbsp;分析进度：{count + 1} / {total_count}</span>"
-            self.replaceOut.emit(progress_bar)
-            time.sleep(0.2)
+            # 获取文本编辑框的文本内容
+            self.appendOut.emit("<span style='color: rgb(86, 177, 110);'>开始分析...</span>")
+            self.appendOut.emit("<span style='color: rgb(86, 177, 110);'>开始分析...</span>")
 
-        # text = self.textEdit.toHtml()
-        # self.textEdit.append("<span style='color: rgb(86, 177, 110);'>0</span> " + text)
-        # #       ━ 605.3/605.3 kB 787.7 kB/s eta 0:00:00
-        # for count in range(10):
-        #     time.sleep(1)
-        #     existing_html = self.textEdit.toHtml()
-        #     print(existing_html)
-        #     # 找到现有html头部内容
-        #     index = existing_html.find("<p>")
-        #     new_html = f"<span style='color: rgb(86, 177, 110);'>{count}</span> " + existing_html[index:]
-        #     self.textEdit.setHtml(new_html)
-
-        # 获取最后一行的内容
-        # lines = text.split("\n")
-        # 替换最新一行
-        # lines[0] = str(time.time())
-        # 重新设置文本编辑框的内容
-        # self.textEdit.setPlainText("\n".join(lines))
-        # self.textEdit.setHtml("")
+            self.analysis_artifact_data()
+        except Exception as e:
+            self.appendOut.emit("<span style='color: rgb(86, 177, 110);'>分析异常，终止</span>")
         self.finishOut.emit()
+
+    def analysis_artifact_data(self):
+        """
+        分析圣遗物数据
+        """
+        config_dir = Data.settings.value("config_dir")
+        dir_path = FileOper.get_dir(f"{config_dir}/{Constant.data_dir}")
+        artifact_list = FileOper.load_config_file(f"{dir_path}/artifact_data.json")
+        self.appendOut.emit("<span style='color: rgb(86, 177, 110);'>组件加载中...</span>")
+        # 分析进度条
+        total_count = len(artifact_list)
+        for index in range(total_count):
+            # 分析进度条 = 数字所占比例 * 50份
+            progress = int(index / total_count * 50) + 1
+            # 构建进度条字符串
+            fill_blank = '&nbsp;' * (100 - (2 * progress))
+            progress_bar = f"<span style='color: rgb(114, 173, 51);'>[ {('━' * progress)}{fill_blank} ]</span>" \
+                           f"<span style='color: rgb(209, 89, 82);'>&nbsp;&nbsp;分析进度：{index + 1} / {total_count}</span>" \
+                           f"<span style='color: rgb(96, 135, 237);'>&nbsp;&nbsp;当前数据：{artifact_list[index]['children_name']}</span>"
+            self.replaceOut.emit(progress_bar)
+            time.sleep(0.1)
 
 
 if __name__ == '__main__':
-    # print(len('━'))
-    for index in range(30):
-        print("[", ('█' * index).ljust(30), "]")
+    print(len('━'))
+    # for index in range(30):
+    #     print("[", ('█' * index).ljust(30), "]")
+    artifact_list = FileOper.load_config_file(f"/Users/zhouliangjun/Documents/temp/data/artifact_data.json")
+    print(len(artifact_list))
+    export_artifact_data(Data.get_excel_artifact_data(artifact_list))

@@ -37,8 +37,22 @@ def export_artifact_data(data_list):
     :param data_list 数据列表，格式：[[...],[...]]
     """
     # 定义表头键值对列表
-    head = ["套装", "部位", "装备角色", "主词条", "主词条属性值", "词条1", "属性值1", "词条2", "属性值2", "词条3",
-            "属性值3", "词条4", "属性值4"]
+    head_map = {
+        "main_name": "套装",
+        "children_name": "子件名称",
+        "slot": "部位",
+        "equip_role": "装备角色",
+        "main_tag_name": "主词条",
+        "main_tag_value": "主词条属性值",
+        "children_tag_name_1": "词条1",
+        "children_tag_value_1": "属性值1",
+        "children_tag_name_2": "词条2",
+        "children_tag_value_2": "属性值2",
+        "children_tag_name_3": "词条3",
+        "children_tag_value_3": "属性值3",
+        "children_tag_name_4": "词条4",
+        "children_tag_value_4": "属性值4"
+    }
 
     # 创建一个工作簿
     wb = Workbook()
@@ -46,16 +60,26 @@ def export_artifact_data(data_list):
     ws = wb.active
     # 设置工作表的名称
     ws.title = u'圣遗物数据'
+
     # 设置表头
-    ws.append(head)
+    # ws.append(head)
+    for col, header in enumerate(head_map.values(), start=1):
+        cell = ws.cell(row=1, column=col)
+        cell.value = header
 
     # 设置表头的列宽
     for cell in ws[1]:
         ws.column_dimensions[cell.column_letter].width = max(len(str(cell.value)) + 20, 20)
 
-    for data in data_list:
-        # 写入数据
-        ws.append(data)
+    # for data in data_list:
+    #     # 写入数据
+    #     ws.append(data)
+
+    # 根据字段映射将数据插入到相应的单元格中
+    for row, row_data in enumerate(data_list, start=2):
+        for field, col in head_map.items():
+            cell = ws.cell(row=row, column=list(head_map.keys()).index(field) + 1)
+            cell.value = row_data.get(field, "--")
 
     for row in ws:
         for cell in row:

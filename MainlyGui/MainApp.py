@@ -299,15 +299,12 @@ class MainApp(object):
         """
         导出excel数据
         """
-        data = [
-            ["哈哈哈", "胡桃", "测试1", "测试2", "测试3", "哈哈哈"],
-            ["胡桃", "测试1", "测试2", "测试3", "哈哈哈", "胡桃",
-             "测试1", "测试2", "测试3"
-             ]]
         try:
-            export_artifact_data(data)
+            # 处理数据
+            artifact_list = FileOper.load_config_file(f"{self.config_dir}/{Constant.data_dir}/artifact_data.json")
+            export_artifact_data(Data.get_excel_artifact_data(artifact_list))
         except Exception as e:
-            QMessageBox.information(self.centralWidget, '提示', f"{e.__cause__}", QMessageBox.Ok)
+            QMessageBox.information(self.centralWidget, '提示', "数据不存在或者存在异常", QMessageBox.Ok)
 
     def open_file(self):
         """
@@ -490,9 +487,9 @@ class MainApp(object):
             self.addTableItem(self.tableData, rowCount=(len(self.tableData) // len(headers)))
 
         # 加载设置
-        config_dir = Data.settings.value("config_dir", None)
-        if config_dir is not None:
-            self.gamePathText.setText(config_dir)
+        self.config_dir = Data.settings.value("config_dir", None)
+        if self.config_dir is not None:
+            self.gamePathText.setText(self.config_dir)
 
         # 线程创建
         self.worker = Strategy()

@@ -157,3 +157,25 @@ def get_artifact_list():
     except Exception as e:
         Logging.error(f"同步圣遗物数据异常，异常信息：{e.__cause__}")
     return result
+
+
+def get_excel_artifact_data(artifact_list):
+    """
+    将json数据转换为excel导出格式
+    """
+    result = []
+    for item in artifact_list:
+        data = {
+            "main_name": item['main_name'],
+            "children_name": item['children_name'],
+            "slot": item['slot'],
+            "equip_role": item['equip_role'],
+            "main_tag_name": item['main_tag']['name'],
+            "main_tag_value": item['main_tag']['value']
+        }
+        children_tags = item['children_tag']
+        for index in range(len(children_tags)):
+            data[f'children_tag_name_{index + 1}'] = children_tags[index]['name']
+            data[f'children_tag_value_{index + 1}'] = children_tags[index]['value']
+        result.append(data)
+    return result

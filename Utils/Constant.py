@@ -17,5 +17,7 @@ artifact_dir = "artifact"
 conf_dir = "conf"
 # 图片目录
 img_dir = "img"
+# 数据目录
+data_dir = "data"
 # 导出目录
 out_dir = "out"
