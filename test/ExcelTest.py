@@ -31,3 +31,25 @@ from openpyxl import Workbook
 #
 # # 保存Excel文件
 # wb.save("data.xlsx")
+
+import pandas as pd
+import json
+
+df = pd.read_excel("data.xlsx")
+# print(df)
+
+json_data = []
+for index, row in df.iterrows():
+    role = {
+        'name': row['角色'],
+        'health': row['大生命'],
+        'attack': row['大攻击'],
+        'defense': row['大防御'],
+        'critical_rate': row['暴击'],
+        'critical_damage': row['暴击伤害'],
+        'elemental_mastery': row['元素精通'],
+        'energy_recharge': row['充能效率']
+    }
+    # print(row)
+    json_data.append(role)
+print(json.dumps(json_data, ensure_ascii=False))
