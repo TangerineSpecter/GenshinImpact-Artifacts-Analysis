@@ -24,6 +24,7 @@ from Strategy.SyncStrategy import SyncJob
 from Utils.CssUtils import (BtnCss)
 from Utils.FileUtils import FileOper
 import Config.SystemInfo as SystemInfo
+from Config.RoleWeightConfig import role_weight_dict
 import Config.LoggingConfig as Logging
 import Config.UpdateLog as UpdateInfo
 import Utils.DataUtils as Data
@@ -370,7 +371,17 @@ class MainApp(object):
             QMessageBox.information(self.centralWidget, '提示', '角色已存在', QMessageBox.Ok)
             return
         # # 初始化表格数据
-        self.addTableItem([select_data, "--", "--", "--", "--", '0', '0', '0', '0', '0', '0', '0'])
+        add_data = [select_data, "--", "--", "--", "--", '0', '0', '0', '0', '0', '0', '0']
+        weight_data = role_weight_dict.get(select_data, None)
+        if weight_data:
+            add_data[5] = str(weight_data['attack'])
+            add_data[6] = str(weight_data['defense'])
+            add_data[7] = str(weight_data['health'])
+            add_data[8] = str(weight_data['critical_rate'])
+            add_data[9] = str(weight_data['critical_damage'])
+            add_data[10] = str(weight_data['elemental_mastery'])
+            add_data[11] = str(weight_data['energy_recharge'])
+        self.addTableItem(add_data)
 
     def settingTableItem(self):
         """
