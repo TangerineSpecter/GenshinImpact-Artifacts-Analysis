@@ -55,22 +55,11 @@
 1. 环境和库安装
 ~~~
 # 创建conda环境
-conda create --name star-rail python=3.11.6
+conda create --name genshin-impact python=3.11.6
 # 库安装
 conda install pyside6
 conda install keyboard
-python -m pip install playsound
 python -m pip python-opencv==4.6.0.66
-python -m pip install paddlepaddle -i https://mirror.baidu.com/pypi/simple
-python -m pip install paddleocr -i https://mirror.baidu.com/pypi/simple
+python -m pip install cnocr[ort-cpu]
 python -m pip install pyautogui
-~~~
-
-2. 报错问题
-
-Q：提示`NameError: name 'predict_system' is not defined`
-A：修改paddleocr.py代码
-~~~
-54行,这样改from ppstructure.predict_system import StructureSystem, save_structure_res, to_excel,TextSystem
-575行,这样改class PaddleOCR(TextSystem):
 ~~~
