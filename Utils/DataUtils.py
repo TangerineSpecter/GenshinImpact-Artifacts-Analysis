@@ -179,3 +179,35 @@ def get_excel_artifact_data(artifact_list):
             data[f'children_tag_value_{index + 1}'] = children_tags[index]['value']
         result.append(data)
     return result
+
+
+def cvdata_2_json_data(cv_data):
+    """
+    将识别数据处理为json格式数据
+    """
+    json_data = {
+        "main_name": cv_data['main_name'],
+        "children_name": cv_data['children_name'],
+        "slot": cv_data['slot'],
+        "equip_role": cv_data['equip_role'],
+        "main_tag": {
+            "name": cv_data['main_tag_name'],
+            "value": cv_data['main_tag_value']
+        },
+        "level": cv_data['level']
+    }
+    # 处理子标签
+    child_list = []
+    for index in range(1, 5):
+        # 数据格式 ('数据', '123')
+        data = cv_data[f'children_tag_{index}']
+        # 最后一个可能不是词条，取决于main_name是否为空
+        if index == 4 and cv_data['main_name'] == "":
+            json_data['main_name'] = str(data)
+        else:
+            child_list.append({
+                "name": data[0],
+                "value": data[1]
+            })
+    json_data['children_tag'] = child_list
+    return json_data

@@ -6,6 +6,7 @@ from PySide6.QtCore import QThread, Signal
 
 import Utils.Constant as Constant
 import Utils.DataUtils as Data
+from Config.OcrCoordinateConfig import entry_position_dict
 from Utils.FileUtils import FileOper
 
 entry_list = ["防御力", "暴击率", "暴击伤害", "生命值", "攻击力", "元素精通",
@@ -22,6 +23,7 @@ class SyncJob(QThread):
 
     def __init__(self):
         super(SyncJob, self).__init__()
+        self.ocr = None
 
     def run(self):
         """
@@ -56,111 +58,87 @@ class SyncJob(QThread):
         # 图像文件夹路径
         config_dir = Data.settings.value("config_dir")
         image_folder = FileOper.get_dir(f"{config_dir}/{Constant.artifact_dir}")
+
         # 获取图像文件列表
         image_files = os.listdir(image_folder)
         from cnocr import CnOcr
-
-        ocr = CnOcr()
+        self.ocr = CnOcr()
 
         # 单个读取
         json_data = []
         total_count = len(image_files)
-        # 圣遗物数据
-        artifact_list = Data.settings.value("artifact_list")
-        artifact_name = [item['name'] for item in artifact_list]
-        for index in range(len(image_files)):
+        for index in range(total_count):
             filename = image_files[index]
             self.statusOut.emit(f"圣遗物数据解析进度：({index + 1}/{total_count})")
             if filename.endswith(".jpg"):
                 data = {}
+                # 读取圣遗物图片
                 image_path = os.path.join(image_folder, filename)
                 ori_image = cv2.imread(image_path)
                 gray_img = cv2.cvtColor(ori_image, cv2.COLOR_BGR2GRAY)
                 image = cv2.bitwise_not(gray_img)
 
-                # 词条1
-                img = image[290:325, 20:250]
-                # 词条2
-                img1 = image[325:365, 20:250]
-                # 词条3
-                img2 = image[355:395, 20:250]
-                # 词条4/套装
-                img3 = image[385:425, 20:250]
-                # 套装/未知
-                img4 = image[425:455, 20:250]
-                # 套装-子名称
-                img5 = image[0:45, 20:250]
-                # 部位
-                img6 = image[55:85, 20:90]
-                # 主属性
-                img7 = image[120:150, 20:250]
-                # 主属性值
-                img8 = image[150:190, 20:200]
-                # 装备角色
-                img9 = image[660:690, 65:250]
-                # 强化值
-                img10 = image[250:290, 25:80]
+                # 根据配置字典遍历识别
+                for entry in entry_position_dict.keys():
+                    text = self.get_ocr_text(image, entry)
+                    data[entry] = text
 
-                children_list = []
-                info = ocr.ocr_for_single_line(img)
-                children_data = match_text(info['text'])
-                children_list.append({"name": children_data[0], "value": children_data[1]})
+                # 调整数据格式后插入
+                json_data.append(Data.cvdata_2_json_data(data))
 
-                info = ocr.ocr_for_single_line(img1)
-                children_data = match_text(info['text'])
-                children_list.append({"name": children_data[0], "value": children_data[1]})
-
-                info = ocr.ocr_for_single_line(img2)
-                children_data = match_text(info['text'])
-                children_list.append({"name": children_data[0], "value": children_data[1]})
-
-                info = ocr.ocr_for_single_line(img3)
-                if match_text(info['text']):
-                    data['main_name'] = info['text'].replace("：", "")
-                else:
-                    children_data = match_text(info['text'])
-                    children_list.append({"name": children_data[0], "value": children_data[1]})
-                data['children_tag'] = children_list
-                info = ocr.ocr_for_single_line(img4)
-                if data['main_name']:
-                    text = info['text'].replace("：", "")
-                    if text in artifact_name:
-                        data['main_name'] = text
-                info = ocr.ocr_for_single_line(img5)
-                data['children_name'] = info['text']
-                info = ocr.ocr_for_single_line(img6)
-                data['type'] = info['text']
-
-                main_data = {}
-                info = ocr.ocr_for_single_line(img7)
-                main_data['name'] = info['text']
-                info = ocr.ocr_for_single_line(img8)
-                main_data['value'] = info['text'].replace(",", "")
-                data['main_tag'] = main_data
-                info = ocr.ocr_for_single_line(img9)
-                role_name = info['text'].replace("已装备", "")
-                role_list = Data.settings.value("role_list")
-                if role_name in role_list:
-                    data['equip_role'] = role_name
-                info = ocr.ocr_for_single_line(img10)
-                number = int(re.search(r'(\d+(\.\d+)?)', info['text']).group(1))
-                data['level'] = number
-                print("数据,", data)
-                json_data.append(data)
+    def get_ocr_text(self, image, key):
+        """
+        识别图片上指定坐标的文字
+        :param image 识别的图片
+        :param key 坐标配置key
+        """
+        position_info = entry_position_dict[key]
+        img = image[position_info['left_top'][1]:position_info['right_bottom'][1],
+              position_info['left_top'][0]:position_info['right_bottom'][0]]
+        info = self.ocr.ocr_for_single_line(img)
+        return match_text(info['text'], position_info)
 
 
-def match_text(text):
+def match_text(text, position_info):
     """
-    词条文字清洗
+    词条文字清洗(子词条返回两个，否则返回原本清洗)
     :param text: 清洗文字
-    :return: 属性词条，属性值
+    :param position_info 坐标配置
+    :return: 清洗文本/属性词条，None/属性值
     """
-    result1 = None
-    result2 = None
+    pattern = position_info.get('pattern', None)
+
     for entry in entry_list:
         if entry in text:
-            result1 = entry
-            result2 = float(re.search(r'(\d+(\.\d+)?)', text).group(1))
-            break
+            return entry, str(re.search(pattern, text).group(1))
 
-    return result1, result2
+    # 替换处理
+    replace = position_info.get('replace', None)
+    if replace:
+        text = text.replace(replace, "")
+
+    # 正则处理
+    if pattern:
+        re_result = re.search(pattern, text)
+        if re_result:
+            text = re_result.group(1)
+
+    # 检测处理(无法匹配处理为空)
+    check_data = position_info.get('check_data', None)
+    if check_data:
+        cache_list = Data.settings.value(check_data)
+        for item in cache_list:
+            if isinstance(item, str) and item in text:
+                return item
+            elif isinstance(item, dict) and item['name'] in text:
+                return item['name']
+        text = ""
+    return text
+
+
+if __name__ == '__main__':
+    json = {}
+    data1 = match_text('攻击力+20%', entry_position_dict['children_tag_1'])
+    print(len(data1))
+    json['test'] = data1
+    print(json)

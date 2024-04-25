@@ -160,16 +160,16 @@ class MainApp(object):
         self.runKeyboardLabel.setObjectName(u"runKeyboardLabel")
         self.runKeyboardLabel.setGeometry(QRect(20, 310, 158, 16))
         # self.runKeyboardLabel.setStyleSheet("color: red;")
-        self.runKeyboardLabel.setText(
-            QCoreApplication.translate("MainWindow", f"启动快捷键：{Constant.start_keyboard}", None))
+        # self.runKeyboardLabel.setText(
+        #     QCoreApplication.translate("MainWindow", f"启动快捷键：{Constant.start_keyboard}", None))
 
         # 停止快捷键
         self.stopKeyboardLabel = QLabel(self.groupBox)
         self.stopKeyboardLabel.setObjectName(u"stopKeyboardLabel")
         self.stopKeyboardLabel.setGeometry(QRect(20, 330, 158, 16))
         # self.stopKeyboardLabel.setStyleSheet("color: red;")
-        self.stopKeyboardLabel.setText(
-            QCoreApplication.translate("MainWindow", f"停止快捷键：{Constant.stop_keyboard}", None))
+        # self.stopKeyboardLabel.setText(
+        #     QCoreApplication.translate("MainWindow", f"停止快捷键：{Constant.stop_keyboard}", None))
 
         # 注意事项
         self.textLabel = QLabel(self.centralWidget)
@@ -503,8 +503,8 @@ class MainApp(object):
             self.gamePathText.setText(self.config_dir)
 
         # 线程创建
-        self.worker = Strategy()
-        self.worker.sinOut.connect(self.showMsg)
+        # self.worker = Strategy()
+        # self.worker.sinOut.connect(self.showMsg)
         # 同步任务
         self.syncJob = SyncJob()
         self.syncJob.statusOut.connect(self.setStatusText)
