@@ -503,8 +503,8 @@ class MainApp(object):
             self.gamePathText.setText(self.config_dir)
 
         # 线程创建
-        # self.worker = Strategy()
-        # self.worker.sinOut.connect(self.showMsg)
+        self.worker = Strategy()
+        self.worker.sinOut.connect(self.showMsg)
         # 同步任务
         self.syncJob = SyncJob()
         self.syncJob.statusOut.connect(self.setStatusText)

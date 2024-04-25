@@ -1,9 +1,11 @@
+import decimal
 import os
 import re
 
 import cv2
 from PySide6.QtCore import QThread, Signal
 
+import json
 import Utils.Constant as Constant
 import Utils.DataUtils as Data
 from Config.OcrCoordinateConfig import entry_position_dict
@@ -53,7 +55,6 @@ class SyncJob(QThread):
         self.refreshOut.emit()
 
     def analysis_artifact_data(self):
-        # TODO 数据入库
         self.statusOut.emit("准备同步背包圣遗物数据，请稍等...")
         # 图像文件夹路径
         config_dir = Data.settings.value("config_dir")
@@ -85,6 +86,9 @@ class SyncJob(QThread):
 
                 # 调整数据格式后插入
                 json_data.append(Data.cvdata_2_json_data(data))
+        dir_path = FileOper.get_dir(f"{config_dir}/{Constant.data_dir}")
+        with open(f"{dir_path}/artifact_data.json", "w", encoding='utf-8') as file:
+            json.dump(json_data, file, ensure_ascii=False)
 
     def get_ocr_text(self, image, key):
         """
@@ -107,10 +111,12 @@ def match_text(text, position_info):
     :return: 清洗文本/属性词条，None/属性值
     """
     pattern = position_info.get('pattern', None)
-
     for entry in entry_list:
-        if entry in text:
-            return entry, str(re.search(pattern, text).group(1))
+        if entry in text and pattern is not None:
+            attr_value = re.search(pattern, text).group(1)
+            if "%" in text:
+                attr_value = decimal.Decimal(attr_value) / decimal.Decimal(100)
+            return entry, str(attr_value)
 
     # 替换处理
     replace = position_info.get('replace', None)
@@ -137,8 +143,8 @@ def match_text(text, position_info):
 
 
 if __name__ == '__main__':
-    json = {}
+    json1 = {}
     data1 = match_text('攻击力+20%', entry_position_dict['children_tag_1'])
     print(len(data1))
-    json['test'] = data1
-    print(json)
+    json1['test'] = data1
+    print(json1)

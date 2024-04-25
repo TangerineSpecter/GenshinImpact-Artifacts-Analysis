@@ -32,7 +32,7 @@ entry_position_dict = {
         "name": "主属性值",
         "left_top": (20, 150),
         "right_bottom": (250, 190),
-        "pattern": r'(\d+(\.\d+)?%)',
+        "pattern": r'(\d+(\.\d+)?)',
         "replace": ","
     },
     "level": {
@@ -45,25 +45,25 @@ entry_position_dict = {
         "name": "词条1",
         "left_top": (20, 290),
         "right_bottom": (250, 325),
-        "pattern": r'(\d+(\.\d+)?%)'
+        "pattern": r'(\d+(\.\d+)?)'
     },
     "children_tag_2": {
         "name": "词条2",
         "left_top": (20, 325),
         "right_bottom": (250, 365),
-        "pattern": r'(\d+(\.\d+)?%)'
+        "pattern": r'(\d+(\.\d+)?)'
     },
     "children_tag_3": {
         "name": "词条3",
         "left_top": (20, 355),
         "right_bottom": (250, 395),
-        "pattern": r'(\d+(\.\d+)?%)'
+        "pattern": r'(\d+(\.\d+)?)'
     },
     "children_tag_4": {
         "name": "词条4/套装",
         "left_top": (20, 385),
         "right_bottom": (250, 425),
-        "pattern": r'(\d+(\.\d+)?%)',
+        "pattern": r'(\d+(\.\d+)?)',
         "replace": "："
     },
     "main_name": {
