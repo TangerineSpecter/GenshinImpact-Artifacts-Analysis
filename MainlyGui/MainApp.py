@@ -8,6 +8,7 @@ from PySide6.QtWidgets import (QGridLayout, QMenu, QFileDialog, QTableWidget, QL
                                QTableWidgetItem, QHeaderView, QAbstractItemView, QStatusBar, QDialog)
 
 from Strategy.AnalysisStrategy import AnalysisJob
+from Strategy.ExcelStrategy import ExportJob
 
 ################################################################################
 ## Form generated from reading UI file 'StarRail.ui'
@@ -29,7 +30,6 @@ import Config.LoggingConfig as Logging
 import Config.UpdateLog as UpdateInfo
 import Utils.DataUtils as Data
 import Utils.Constant as Constant
-from Utils.ExcelUtils import export_artifact_data
 
 # 系统信息
 systemInfo = SystemInfo.base_info
@@ -103,7 +103,7 @@ class MainApp(object):
         self.exportBtn = QPushButton(self.centralWidget)
         self.exportBtn.setObjectName(u"exportBtn")
         self.exportBtn.setGeometry(QRect(1130, 220, 80, 40))
-        self.exportBtn.clicked.connect(self.export_excel)
+        self.exportBtn.clicked.connect(lambda: self.exportJob.start())
         self.exportBtn.setText(QCoreApplication.translate("MainWindow", "导出", None))
 
         # 同步
@@ -295,17 +295,6 @@ class MainApp(object):
         self.settingItemBtn.setToolTip("修改选中任务内容以及次数")
         self.removeItemBtn.setToolTip("对选中任务进行移除")
         self.analysisBtn.setToolTip("进行圣遗物推荐分析")
-
-    def export_excel(self):
-        """
-        导出excel数据
-        """
-        try:
-            # 处理数据
-            artifact_list = FileOper.load_config_file(f"{self.config_dir}/{Constant.data_dir}/artifact_data.json")
-            export_artifact_data(Data.get_excel_artifact_data(artifact_list))
-        except Exception as e:
-            QMessageBox.information(self.centralWidget, '提示', "数据不存在或者存在异常", QMessageBox.Ok)
 
     def open_file(self):
         """
@@ -509,6 +498,9 @@ class MainApp(object):
         self.syncJob = SyncJob()
         self.syncJob.statusOut.connect(self.setStatusText)
         self.syncJob.refreshOut.connect(self.refreshData)
+        # 导出任务
+        self.exportJob = ExportJob()
+        self.exportJob.statusOut.connect(self.setStatusText)
 
 
 class AboutDialog(QMessageBox):

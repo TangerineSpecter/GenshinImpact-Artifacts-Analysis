@@ -62,7 +62,6 @@ def export_artifact_data(data_list):
     ws.title = u'圣遗物数据'
 
     # 设置表头
-    # ws.append(head)
     for col, header in enumerate(head_map.values(), start=1):
         cell = ws.cell(row=1, column=col)
         cell.value = header
@@ -70,10 +69,6 @@ def export_artifact_data(data_list):
     # 设置表头的列宽
     for cell in ws[1]:
         ws.column_dimensions[cell.column_letter].width = max(len(str(cell.value)) + 20, 20)
-
-    # for data in data_list:
-    #     # 写入数据
-    #     ws.append(data)
 
     # 根据字段映射将数据插入到相应的单元格中
     for row, row_data in enumerate(data_list, start=2):

@@ -26,7 +26,8 @@ entry_position_dict = {
     "main_tag_name": {
         "name": "主属性",
         "left_top": (20, 120),
-        "right_bottom": (250, 150)
+        "right_bottom": (250, 150),
+        "pattern": r'\b0\b'  # 随便写个，无需匹配
     },
     "main_tag_value": {
         "name": "主属性值",

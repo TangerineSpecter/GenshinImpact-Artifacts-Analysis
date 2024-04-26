@@ -1,11 +1,11 @@
 import decimal
+import json
 import os
 import re
 
 import cv2
 from PySide6.QtCore import QThread, Signal
 
-import json
 import Utils.Constant as Constant
 import Utils.DataUtils as Data
 from Config.OcrCoordinateConfig import entry_position_dict
@@ -113,9 +113,13 @@ def match_text(text, position_info):
     pattern = position_info.get('pattern', None)
     for entry in entry_list:
         if entry in text and pattern is not None:
-            attr_value = re.search(pattern, text).group(1)
+            pattern_result = re.search(pattern, text)
+            if pattern_result is None:
+                return entry
+            # 处理正则数据
+            attr_value = pattern_result.group(1)
             if "%" in text:
-                attr_value = decimal.Decimal(attr_value) / decimal.Decimal(100)
+                attr_value = decimal.Decimal(pattern_result.group(1)) / decimal.Decimal(100)
             return entry, str(attr_value)
 
     # 替换处理
@@ -143,8 +147,10 @@ def match_text(text, position_info):
 
 
 if __name__ == '__main__':
-    json1 = {}
-    data1 = match_text('攻击力+20%', entry_position_dict['children_tag_1'])
-    print(len(data1))
-    json1['test'] = data1
-    print(json1)
+    # json1 = {}
+    # data1 = match_text('攻击力+20%', entry_position_dict['children_tag_1'])
+    # print(len(data1))
+    # json1['test'] = data1
+    # print(json1)
+    # print(re.search("", "测试").group(1))
+    print(match_text("攻击力+10", entry_position_dict['children_tag_1']))

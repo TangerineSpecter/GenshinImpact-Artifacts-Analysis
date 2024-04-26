@@ -5,7 +5,6 @@ from PySide6.QtCore import QThread, Signal
 import Utils.DataUtils as Data
 from Utils import Constant
 from Utils.FileUtils import FileOper
-from Utils.ExcelUtils import export_artifact_data
 
 
 class AnalysisJob(QThread):
@@ -66,4 +65,4 @@ if __name__ == '__main__':
     #     print("[", ('█' * index).ljust(30), "]")
     artifact_list = FileOper.load_config_file(f"/Users/zhouliangjun/Documents/temp/data/artifact_data.json")
     print(len(artifact_list))
-    export_artifact_data(Data.get_excel_artifact_data(artifact_list))
+    # export_artifact_data(Data.get_excel_artifact_data(artifact_list, None))
