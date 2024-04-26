@@ -327,7 +327,7 @@ class MainApp(object):
                 item.setTextAlignment(Qt.AlignCenter)
                 # 拼接到上一次行数后面
                 self.tableWidget.setItem(start_row_count + rowIndex, columnIndex, item)
-        self.__refreshTableCache()
+        # self.__refreshTableCache()
 
     def updateTableItem(self, data, columnCount=3, rowCount=1):
         """
@@ -483,8 +483,11 @@ class MainApp(object):
                    '元素精通', '充能效率']
         self.tableWidget.setColumnCount(len(headers))
         self.tableWidget.setHorizontalHeaderLabels(headers)
+        self.tableWidget.setEditTriggers(QTableWidget.DoubleClicked)
         if self.tableData is not None:
             self.addTableItem(self.tableData, rowCount=(len(self.tableData) // len(headers)))
+        # 数据变动监听
+        self.tableWidget.itemChanged.connect(self.__refreshTableCache)
 
         # 加载设置
         self.config_dir = Data.settings.value("config_dir", None)
