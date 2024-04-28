@@ -72,7 +72,7 @@ class SyncJob(QThread):
             filename = image_files[index]
             self.statusOut.emit(f"圣遗物数据解析进度：({index + 1}/{total_count})")
             if filename.endswith(".jpg"):
-                data = {}
+                data = {'index': index + 1}
                 # 读取圣遗物图片
                 image_path = os.path.join(image_folder, filename)
                 ori_image = cv2.imread(image_path)

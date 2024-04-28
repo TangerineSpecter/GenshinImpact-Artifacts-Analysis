@@ -374,18 +374,6 @@ class MainApp(object):
             add_data[11] = str(weight_data['energy_recharge'])
         self.addTableItem(add_data)
 
-    def settingTableItem(self):
-        """
-        修改表格数据
-        :return:
-        """
-        select_item = self.tableWidget.selectedItems()
-        if not select_item:
-            QMessageBox.information(self.centralWidget, '提示', '未选中数据', QMessageBox.Ok)
-            return
-
-        self.show_input_dialog(select_item[0].row(), select_item[0].text())
-
     def removeTableItem(self):
         """
         移除表格数据
@@ -409,18 +397,6 @@ class MainApp(object):
         if reply == QMessageBox.Yes:
             self.tableWidget.removeRow(select_item[0].row())
             self.__refreshTableCache()
-
-    def show_input_dialog(self, row_count, parent_name):
-        # max_count = DungeonConfig.dungeon_dict[parent_name]['max_count']
-        # items = DungeonConfig.dungeon_dict[parent_name]['children']
-        # item, ok = QInputDialog.getItem(self.centralWidget, "副本内容", "选择一个副本:", items, 0, False)
-        #
-        # if ok:
-        #     number, ok = QInputDialog.getInt(self.centralWidget, "执行次数", "输入一个执行次数:",
-        #                                      1, 0, int(max_count), 1)
-        #     if ok:
-        #         self.updateTableItem([parent_name, item, number], rowCount=row_count)
-        pass
 
     def __refreshTableCache(self):
         """
@@ -478,7 +454,7 @@ class MainApp(object):
         # 执行表格
         self.tableWidget = QTableWidget(self.groupBox)
         self.tableWidget.setObjectName(u"tableView")
-        self.tableWidget.setGeometry(QRect(180, 50, Constant.window_width - 220, 240))
+        self.tableWidget.setGeometry(QRect(180, 50, Constant.window_width - 340, 240))
         # 禁止编辑单元格
         self.tableWidget.setEditTriggers(QTableWidget.NoEditTriggers)
         # 单元格自适应
@@ -496,10 +472,8 @@ class MainApp(object):
 
         # 数据
         self.tableData = Data.settings.value("table_data", None)
-        headers = ['角色', '推荐套装', '理之冠', '空之杯', '时之沙', '攻击力', '防御力', '生命值', '暴击率', '暴击伤害',
-                   '元素精通', '充能效率']
-        self.tableWidget.setColumnCount(len(headers))
-        self.tableWidget.setHorizontalHeaderLabels(headers)
+        self.tableWidget.setColumnCount(len(Data.table_heads))
+        self.tableWidget.setHorizontalHeaderLabels(Data.table_heads)
         # 双击编辑单元格
         self.tableWidget.setEditTriggers(QTableWidget.DoubleClicked)
 
@@ -510,7 +484,7 @@ class MainApp(object):
         self.tableWidget.setItemDelegateForColumn(3, delegate)
         self.tableWidget.setItemDelegateForColumn(4, delegate)
         if self.tableData is not None:
-            self.addTableItem(self.tableData, rowCount=(len(self.tableData) // len(headers)))
+            self.addTableItem(self.tableData, rowCount=(len(self.tableData) // len(Data.table_heads)))
         # 数据变动监听
         self.tableWidget.itemChanged.connect(self.__refreshTableCache)
 

@@ -28,6 +28,9 @@ screen_width, screen_height = pyautogui.size()
 # 默认点间隔
 duration = 0.1
 
+table_heads = ['角色', '推荐套装', '理之冠', '空之杯', '时之沙', '攻击力', '防御力', '生命值', '暴击率', '暴击伤害',
+               '元素精通', '充能效率']
+
 
 def get_resource_path(file_path):
     """
@@ -186,6 +189,7 @@ def cvdata_2_json_data(cv_data):
     将识别数据处理为json格式数据
     """
     json_data = {
+        "index": cv_data['index'],
         "main_name": cv_data['main_name'],
         "children_name": cv_data['children_name'],
         "slot": cv_data['slot'],
@@ -211,3 +215,25 @@ def cvdata_2_json_data(cv_data):
             })
     json_data['children_tag'] = child_list
     return json_data
+
+
+def table_data_2_obj(index, tableData):
+    """
+    根据索引切割table数据为对象数据
+    :return 对象数据
+    """
+    role_info = tableData[(index * 12):(index + 1) * 12]
+    return {
+        "role_name": role_info[0],
+        "commend_artifacts": role_info[1].replace('--', ''),
+        "head_main": role_info[2].replace('--', ''),
+        "cup_main": role_info[3].replace('--', ''),
+        "sand_main": role_info[4].replace('--', ''),
+        "attack": int(role_info[5]),
+        "defense": int(role_info[6]),
+        "health": int(role_info[7]),
+        "critical_rate": int(role_info[8]),
+        "critical_damage": int(role_info[9]),
+        "elemental_mastery": int(role_info[10]),
+        "energy_recharge": int(role_info[11])
+    }

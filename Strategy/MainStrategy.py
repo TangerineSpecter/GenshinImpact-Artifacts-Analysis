@@ -37,14 +37,6 @@ class Strategy(QThread):
         # 重置
         self.tableData.clear()
         self.config_dir = Data.settings.value("config_dir", None)
-        data = Data.settings.value("table_data", None)
-        # for i in range(0, len(data), 3):
-        #     obj = {
-        #         "main_name": data[i],
-        #         "process_name": data[i + 1],
-        #         "count": data[i + 2]
-        #     }
-        #     self.tableData.append(obj)
 
     def stop(self):
         Logging.warn("终止脚本运行")
