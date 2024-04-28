@@ -2,11 +2,11 @@
 import platform
 
 from PySide6.QtCore import (QCoreApplication, QMetaObject, QRect, QStringListModel, Qt)
-from PySide6.QtGui import (QAction, QIcon)
+from PySide6.QtGui import (QAction, QIcon, QCursor)
 from PySide6.QtWidgets import (QGridLayout, QMenu, QFileDialog, QTableWidget, QListView, QGroupBox,
                                QMenuBar, QWidget, QMessageBox, QPushButton, QTextEdit, QLabel, QVBoxLayout,
                                QTableWidgetItem, QHeaderView, QAbstractItemView, QStatusBar, QDialog, QComboBox,
-                               QStyledItemDelegate)
+                               QStyledItemDelegate, QListWidget, QListWidgetItem, QToolTip)
 
 from Strategy.AnalysisStrategy import AnalysisJob
 from Strategy.ExcelStrategy import ExportJob
@@ -123,16 +123,16 @@ class MainApp(object):
         self.addItemBtn.setText(QCoreApplication.translate("MainWindow", "添加", None))
 
         # 设置内容按钮
-        self.settingItemBtn = QPushButton(self.groupBox)
-        self.settingItemBtn.setObjectName(u"settingItemBtn")
-        self.settingItemBtn.setGeometry(QRect(290, 310, 80, 40))
-        self.settingItemBtn.clicked.connect(self.settingTableItem)
-        self.settingItemBtn.setText(QCoreApplication.translate("MainWindow", "设置", None))
+        # self.settingItemBtn = QPushButton(self.groupBox)
+        # self.settingItemBtn.setObjectName(u"settingItemBtn")
+        # self.settingItemBtn.setGeometry(QRect(290, 310, 80, 40))
+        # self.settingItemBtn.clicked.connect(self.settingTableItem)
+        # self.settingItemBtn.setText(QCoreApplication.translate("MainWindow", "设置", None))
 
         # 移除内容按钮
         self.removeItemBtn = QPushButton(self.groupBox)
         self.removeItemBtn.setObjectName(u"removeItemBtn")
-        self.removeItemBtn.setGeometry(QRect(400, 310, 80, 40))
+        self.removeItemBtn.setGeometry(QRect(290, 310, 80, 40))
         self.removeItemBtn.clicked.connect(self.removeTableItem)
         self.removeItemBtn.setText(QCoreApplication.translate("MainWindow", "移除", None))
 
@@ -271,7 +271,7 @@ class MainApp(object):
         """
         BtnCss.blue(self.openFileBtn)
         BtnCss.blue(self.addItemBtn)
-        BtnCss.orange(self.settingItemBtn)
+        # BtnCss.orange(self.settingItemBtn)
         BtnCss.red(self.removeItemBtn)
         BtnCss.blue(self.startGameBtn)
         BtnCss.purple(self.analysisBtn)
@@ -279,7 +279,7 @@ class MainApp(object):
         BtnCss.white(self.syncBtn)
         # icon设置
         self.addItemBtn.setIcon(QIcon(Data.get_resource_path("Resource/icon/add.png")))
-        self.settingItemBtn.setIcon(QIcon(Data.get_resource_path("Resource/icon/setting.png")))
+        # self.settingItemBtn.setIcon(QIcon(Data.get_resource_path("Resource/icon/setting.png")))
         self.removeItemBtn.setIcon(QIcon(Data.get_resource_path("Resource/icon/remove.png")))
         self.openFileBtn.setIcon(QIcon(Data.get_resource_path("Resource/icon/file.png")))
         self.analysisBtn.setIcon(QIcon(Data.get_resource_path("Resource/icon/log.png")))
@@ -294,7 +294,7 @@ class MainApp(object):
         self.openFileBtn.setToolTip("选择数据存放目录")
         self.startGameBtn.setToolTip("执行背包圣遗物扫描")
         self.addItemBtn.setToolTip("添加列表需要执行的任务")
-        self.settingItemBtn.setToolTip("修改选中任务内容以及次数")
+        # self.settingItemBtn.setToolTip("修改选中任务内容以及次数")
         self.removeItemBtn.setToolTip("对选中任务进行移除")
         self.analysisBtn.setToolTip("进行圣遗物推荐分析")
 
@@ -480,6 +480,11 @@ class MainApp(object):
         # 选中整行
         self.tableWidget.setSelectionBehavior(QTableWidget.SelectRows)
         self.tableWidget.setSelectionMode(QTableWidget.SingleSelection)
+        self.tableWidget.setMouseTracking(True)
+        # 悬停显示
+        # self.tableWidget.itemEntered.connect(self.showTableToolTip)
+        # 点击显示
+        self.tableWidget.cellClicked.connect(self.showTableToolTip)
 
         # 数据
         self.tableData = Data.settings.value("table_data", None)
@@ -492,6 +497,7 @@ class MainApp(object):
 
         # 设置单元格下拉框
         delegate = ComboBoxDelegate()
+        self.tableWidget.setItemDelegateForColumn(1, delegate)
         self.tableWidget.setItemDelegateForColumn(2, delegate)
         self.tableWidget.setItemDelegateForColumn(3, delegate)
         self.tableWidget.setItemDelegateForColumn(4, delegate)
@@ -516,17 +522,78 @@ class MainApp(object):
         self.exportJob = ExportJob()
         self.exportJob.statusOut.connect(self.setStatusText)
 
+    def showTableToolTip(self, item):
+        if item is not None:
+            # 获取鼠标当前的全局位置
+            globalPos = QCursor.pos()
+            # 将全局坐标转换为表格部件的本地坐标
+            localPos = self.tableWidget.viewport().mapFromGlobal(globalPos)
+            # 使用本地坐标获取单元格项
+            itemAtPos = self.tableWidget.itemAt(localPos)
+            if itemAtPos is not None:
+                styledText = "<html><body style='background-color: #409EFF; color: black; font-size: 12px;'>" + itemAtPos.text() + "</body></html>"
+                QToolTip.showText(globalPos, styledText)
+
+
+class MultiSelectionDialog(QDialog):
+    """
+    套装设置选择框
+    """
+
+    def __init__(self, options, selected, parent=None):
+        """
+        :param options 默认选项
+        :param selected 选中选项
+        """
+        super().__init__(parent)
+        self.listWidget = QListWidget(self)
+        for option in options:
+            item = QListWidgetItem(option)
+            item.setFlags(item.flags() | Qt.ItemIsUserCheckable)
+            item.setCheckState(Qt.Checked if option in selected else Qt.Unchecked)
+            self.listWidget.addItem(item)
+
+        self.okButton = QPushButton("保存", self)
+        self.okButton.clicked.connect(self.accept)
+
+        layout = QVBoxLayout(self)
+        layout.addWidget(self.listWidget)
+        layout.addWidget(self.okButton)
+
+    def selectedItems(self):
+        return [self.listWidget.item(i).text() for i in range(self.listWidget.count()) if
+                self.listWidget.item(i).checkState() == Qt.Checked]
+
 
 class ComboBoxDelegate(QStyledItemDelegate):
+    """
+    初始化编辑框为下拉框
+    """
 
     def createEditor(self, parent, option, index):
         column_index = index.column()
-        combo = QComboBox(parent)
-
-        option_list = attr_dict[column_index]
-        for item in option_list:
-            combo.addItem(item)
-        return combo
+        # 主词条绑定
+        if column_index in [2, 3, 4]:
+            combo = QComboBox(parent)
+            for item in attr_dict[column_index]:
+                combo.addItem(item)
+            return combo
+        elif column_index in [1]:
+            # 套装绑定
+            artifact_list = Data.settings.value("artifact_list")
+            if artifact_list is None:
+                artifact_list = ['--']
+            else:
+                artifact_list = [item['name'] for item in artifact_list]
+            dialog = MultiSelectionDialog(artifact_list, index.data().split(","), parent)
+            if dialog.exec():
+                selected_items = dialog.selectedItems()
+                items_str = ",".join(selected_items)
+                # 获取单元格的模型
+                model = index.model()
+                # 获取单元格的模型
+                model.setData(index, items_str)
+        return None
 
 
 class AboutDialog(QMessageBox):

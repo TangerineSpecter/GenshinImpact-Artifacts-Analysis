@@ -77,6 +77,7 @@ if __name__ == "__main__":
         QTextEdit:focus {
             border: 1px solid #409EFF;
         }
+        QToolTip { border: 1px solid #409EFF; border-radius: 2px; padding: 4px; }
         """
     )
 
