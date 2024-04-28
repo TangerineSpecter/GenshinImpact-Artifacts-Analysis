@@ -5,7 +5,8 @@ from PySide6.QtCore import (QCoreApplication, QMetaObject, QRect, QStringListMod
 from PySide6.QtGui import (QAction, QIcon)
 from PySide6.QtWidgets import (QGridLayout, QMenu, QFileDialog, QTableWidget, QListView, QGroupBox,
                                QMenuBar, QWidget, QMessageBox, QPushButton, QTextEdit, QLabel, QVBoxLayout,
-                               QTableWidgetItem, QHeaderView, QAbstractItemView, QStatusBar, QDialog)
+                               QTableWidgetItem, QHeaderView, QAbstractItemView, QStatusBar, QDialog, QComboBox,
+                               QStyledItemDelegate)
 
 from Strategy.AnalysisStrategy import AnalysisJob
 from Strategy.ExcelStrategy import ExportJob
@@ -26,6 +27,7 @@ from Utils.CssUtils import (BtnCss)
 from Utils.FileUtils import FileOper
 import Config.SystemInfo as SystemInfo
 from Config.RoleWeightConfig import role_weight_dict
+from Config.SlotOptionConfig import attr_dict
 import Config.LoggingConfig as Logging
 import Config.UpdateLog as UpdateInfo
 import Utils.DataUtils as Data
@@ -41,7 +43,7 @@ class MainApp(object):
         Logging.info("启动应用程序")
         # 初始化窗体基本信息
         MainWindow.setObjectName(u"MainWindow")
-        MainWindow.setFixedSize(1240, 500)
+        MainWindow.setFixedSize(Constant.window_width, Constant.window_height)
         MainWindow.setWindowIcon(QIcon(Data.get_resource_path(Constant.icon)))
         MainWindow.setWindowTitle(
             QCoreApplication.translate("MainWindow", f"{systemInfo['title']} v{systemInfo['version']}", None))
@@ -81,35 +83,35 @@ class MainApp(object):
         # 打开
         self.openFileBtn = QPushButton(self.centralWidget)
         self.openFileBtn.setObjectName(u"openFileBtn")
-        self.openFileBtn.setGeometry(QRect(1130, 10, 80, 40))
+        self.openFileBtn.setGeometry(QRect(Constant.window_width - 110, 10, 80, 40))
         self.openFileBtn.clicked.connect(self.open_file)
         self.openFileBtn.setText(QCoreApplication.translate("MainWindow", "目录", None))
 
         # 启动
         self.startGameBtn = QPushButton(self.centralWidget)
         self.startGameBtn.setObjectName(u"startGameBtn")
-        self.startGameBtn.setGeometry(QRect(1130, 80, 80, 40))
+        self.startGameBtn.setGeometry(QRect(Constant.window_width - 110, 80, 80, 40))
         self.startGameBtn.clicked.connect(lambda: self.worker.start())
         self.startGameBtn.setText(QCoreApplication.translate("MainWindow", "扫描", None))
 
         # 分析
         self.analysisBtn = QPushButton(self.centralWidget)
         self.analysisBtn.setObjectName(u"analysisBtn")
-        self.analysisBtn.setGeometry(QRect(1130, 150, 80, 40))
+        self.analysisBtn.setGeometry(QRect(Constant.window_width - 110, 150, 80, 40))
         self.analysisBtn.clicked.connect(show_analysis)
         self.analysisBtn.setText(QCoreApplication.translate("MainWindow", "分析", None))
 
         # 导出
         self.exportBtn = QPushButton(self.centralWidget)
         self.exportBtn.setObjectName(u"exportBtn")
-        self.exportBtn.setGeometry(QRect(1130, 220, 80, 40))
+        self.exportBtn.setGeometry(QRect(Constant.window_width - 110, 220, 80, 40))
         self.exportBtn.clicked.connect(lambda: self.exportJob.start())
         self.exportBtn.setText(QCoreApplication.translate("MainWindow", "导出", None))
 
         # 同步
         self.syncBtn = QPushButton(self.centralWidget)
         self.syncBtn.setObjectName(u"syncBtn")
-        self.syncBtn.setGeometry(QRect(1130, 290, 80, 40))
+        self.syncBtn.setGeometry(QRect(Constant.window_width - 110, 290, 80, 40))
         self.syncBtn.clicked.connect(lambda: self.__syncData())
         self.syncBtn.setText(QCoreApplication.translate("MainWindow", "同步", None))
 
@@ -194,14 +196,14 @@ class MainApp(object):
         # 路径框
         self.gamePathText = QTextEdit(self.centralWidget)
         self.gamePathText.setObjectName(u"gamePathText")
-        self.gamePathText.setGeometry(QRect(10, 10, 1100, 40))
+        self.gamePathText.setGeometry(QRect(10, 10, Constant.window_width - 140, 40))
         self.gamePathText.setReadOnly(True)
         self.gamePathText.setPlaceholderText(QCoreApplication.translate("MainWindow", "游戏启动路径", None))
 
         # 设置部分窗体
         self.groupBox = QGroupBox(self.centralWidget)
         self.groupBox.setObjectName(u"groupBox")
-        self.groupBox.setGeometry(QRect(20, 70, 1100, 360))
+        self.groupBox.setGeometry(QRect(20, 70, Constant.window_width - 140, 360))
         self.groupBox.setTitle(QCoreApplication.translate("MainWindow", "设置", None))
 
         # 状态栏
@@ -327,7 +329,7 @@ class MainApp(object):
                 item.setTextAlignment(Qt.AlignCenter)
                 # 拼接到上一次行数后面
                 self.tableWidget.setItem(start_row_count + rowIndex, columnIndex, item)
-        # self.__refreshTableCache()
+        self.__refreshTableCache()
 
     def updateTableItem(self, data, columnCount=3, rowCount=1):
         """
@@ -426,6 +428,8 @@ class MainApp(object):
         for row in range(rows):
             for col in range(cols):
                 item = self.tableWidget.item(row, col)
+                if item is None:
+                    return
                 all_data.append(item.text())
 
         Data.settings.setValue("table_data", all_data)
@@ -466,7 +470,7 @@ class MainApp(object):
         # 执行表格
         self.tableWidget = QTableWidget(self.groupBox)
         self.tableWidget.setObjectName(u"tableView")
-        self.tableWidget.setGeometry(QRect(180, 50, 900, 240))
+        self.tableWidget.setGeometry(QRect(180, 50, Constant.window_width - 220, 240))
         # 禁止编辑单元格
         self.tableWidget.setEditTriggers(QTableWidget.NoEditTriggers)
         # 单元格自适应
@@ -483,7 +487,14 @@ class MainApp(object):
                    '元素精通', '充能效率']
         self.tableWidget.setColumnCount(len(headers))
         self.tableWidget.setHorizontalHeaderLabels(headers)
+        # 双击编辑单元格
         self.tableWidget.setEditTriggers(QTableWidget.DoubleClicked)
+
+        # 设置单元格下拉框
+        delegate = ComboBoxDelegate()
+        self.tableWidget.setItemDelegateForColumn(2, delegate)
+        self.tableWidget.setItemDelegateForColumn(3, delegate)
+        self.tableWidget.setItemDelegateForColumn(4, delegate)
         if self.tableData is not None:
             self.addTableItem(self.tableData, rowCount=(len(self.tableData) // len(headers)))
         # 数据变动监听
@@ -504,6 +515,18 @@ class MainApp(object):
         # 导出任务
         self.exportJob = ExportJob()
         self.exportJob.statusOut.connect(self.setStatusText)
+
+
+class ComboBoxDelegate(QStyledItemDelegate):
+
+    def createEditor(self, parent, option, index):
+        column_index = index.column()
+        combo = QComboBox(parent)
+
+        option_list = attr_dict[column_index]
+        for item in option_list:
+            combo.addItem(item)
+        return combo
 
 
 class AboutDialog(QMessageBox):

@@ -3,6 +3,10 @@ app_name = 'YuanShen.exe'
 
 # 原神窗口名称
 window_title = "原神"
+# 窗体高度
+window_height = 500
+# 窗体宽度
+window_width = 1340
 
 # 图标位置
 icon = "Resource/icon/main.ico"
