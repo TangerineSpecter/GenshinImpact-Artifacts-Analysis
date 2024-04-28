@@ -79,12 +79,14 @@ class AnalysisJob(QThread):
                     not_commend_roles.append(role_info['role_name'])
                     continue
                 # 未设置属性要求
-                if (len(role_info['head_main']) + len(role_info['cup_main']) + len(role_info['sand_main'])) <= 0:
+                if len(role_info['head_main']) <= 0 \
+                        or len(role_info['cup_main']) <= 0 \
+                        or len(role_info['sand_main']) <= 0:
                     not_main_roles.append(role_info['role_name'])
                     continue
 
                 # TODO 按照推荐套装计算评分\计算主属性\跟当前装备套装比对
-
+                
                 time.sleep(0.1)
 
         self.appendOut.emit("<span style='color: rgb(86, 177, 110);'>数据分析完毕...</span>")
