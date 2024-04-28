@@ -7,6 +7,23 @@ from Utils import Constant
 from Utils.FileUtils import FileOper
 
 
+def check_main_attr(artifact_info, role_table_data):
+    """
+    检测圣遗物主属性是否符合要求
+    :param artifact_info 圣遗物信息
+    :param role_table_data 角色配置信息
+    :return True：符合
+    """
+    main_attr = artifact_info['main_tag']['name']
+    if artifact_info['slot'] == "理之冠":
+        return main_attr == role_table_data['head_main']
+    elif artifact_info['slot'] == "空之杯":
+        return main_attr == role_table_data['cup_main']
+    elif artifact_info['slot'] == "时之沙":
+        return main_attr == role_table_data['sand_main']
+    return True
+
+
 class AnalysisJob(QThread):
     # 追加内容信号
     appendOut = Signal(str)
@@ -35,6 +52,7 @@ class AnalysisJob(QThread):
             self.analysis_artifact_data()
             self.appendOut.emit("<span style='color: rgb(86, 177, 110);'>分析完毕...</span>")
         except Exception as e:
+            print(e)
             self.appendOut.emit("<span style='color: rgb(86, 177, 110);'>分析异常，终止</span>")
         self.finishOut.emit()
 
@@ -61,6 +79,21 @@ class AnalysisJob(QThread):
         total_count = int(len(tableData) / len(Data.table_heads))
         if total_count > 0:
             self.appendOut.emit("<span style='color: rgb(86, 177, 110);'>开始分析数据...</span>")
+
+            # 判断是否有本地圣遗物数据
+            if len(artifact_list) <= 0:
+                self.appendOut.emit("<span style='color: rgb(86, 177, 110);'>无圣遗物数据，终止分析...</span>")
+                return
+
+            # 转换数据
+            artifact_map = {}
+            for item in artifact_list:
+                key = item["main_name"]
+                if key in artifact_map:
+                    artifact_map[key].append(item)
+                else:
+                    artifact_map[key] = [item]
+
             for index in range(total_count):
                 role_info = Data.table_data_2_obj(index, tableData)
                 # 分析进度条 = 数字所占比例 * 20份
@@ -86,7 +119,18 @@ class AnalysisJob(QThread):
                     continue
 
                 # TODO 按照推荐套装计算评分\计算主属性\跟当前装备套装比对
-                
+                # 清洗出符合推荐套装的圣遗物
+                accord_list = []
+                for name in role_info['commend_artifacts'].split(','):
+                    # 符合推荐套装的圣遗物列表
+                    commend_list = artifact_map[name]
+                    # 主属性清洗
+                    for artifact_info in commend_list:
+                        if check_main_attr(artifact_info, role_info):
+                            accord_list.append(artifact_info)
+                progress_bar += f"<span style='color: rgb(96, 135, 237);'>&nbsp;&nbsp;符合圣遗物数量：{len(accord_list)}</span>"
+                self.replaceOut.emit(progress_bar)
+                # print(json.dumps(accord_list, ensure_ascii=False))
                 time.sleep(0.1)
 
         self.appendOut.emit("<span style='color: rgb(86, 177, 110);'>数据分析完毕...</span>")
