@@ -396,11 +396,19 @@ class MainApp(object):
             QMessageBox.information(self.centralWidget, '提示', '未选中数据', QMessageBox.Ok)
             return
 
-        # reply = QMessageBox.question(self.centralWidget, '确认', '确定要执行操作吗？', QMessageBox.Yes | QMessageBox.No,
-        #                              QMessageBox.No)
-        # if reply == QMessageBox.Yes:
-        self.tableWidget.removeRow(select_item[0].row())
-        self.__refreshTableCache()
+        msgBox = QMessageBox()
+        msgBox.setText('确定要移除数据吗？')
+        msgBox.setWindowTitle('确认')
+        msgBox.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+        # 获取按钮对象并设置自定义文本
+        yes_button = msgBox.button(QMessageBox.Yes)
+        yes_button.setText('确定')
+        no_button = msgBox.button(QMessageBox.No)
+        no_button.setText('取消')
+        reply = msgBox.exec_()
+        if reply == QMessageBox.Yes:
+            self.tableWidget.removeRow(select_item[0].row())
+            self.__refreshTableCache()
 
     def show_input_dialog(self, row_count, parent_name):
         # max_count = DungeonConfig.dungeon_dict[parent_name]['max_count']
