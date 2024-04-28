@@ -1,4 +1,5 @@
 import time
+from decimal import Decimal
 
 from PySide6.QtCore import QThread, Signal
 
@@ -7,21 +8,108 @@ from Utils import Constant
 from Utils.FileUtils import FileOper
 
 
-def check_main_attr(artifact_info, role_table_data):
+def cal_artifact_grade(role_info, artifact_info):
     """
-    检测圣遗物主属性是否符合要求
-    :param artifact_info 圣遗物信息
-    :param role_table_data 角色配置信息
-    :return True：符合
+    评分计算
     """
-    main_attr = artifact_info['main_tag']['name']
-    if artifact_info['slot'] == "理之冠":
-        return main_attr == role_table_data['head_main']
-    elif artifact_info['slot'] == "空之杯":
-        return main_attr == role_table_data['cup_main']
-    elif artifact_info['slot'] == "时之沙":
-        return main_attr == role_table_data['sand_main']
-    return True
+    total_grade = 0.0
+    # 主标签(默认暴击、爆伤 + lv分数)
+    main_tag = artifact_info['main_tag']['name']
+    level = artifact_info['level']
+    if main_tag in ["暴击率", "暴击伤害"]:
+        total_grade += level
+    # 子标签
+    children_tags = artifact_info['children_tag']
+    for tag_info in children_tags:
+        tag_name = tag_info['name']
+        if tag_name in cal_dict:
+            value = tag_info['value']
+            grade = cal_dict[tag_name](role_info, value)
+            total_grade += grade
+    return total_grade
+
+
+def cal_attack_grade(role_info, value):
+    """
+    攻击评分计算
+    :param role_info 角色配置信息
+    :param value 属性值
+    """
+    if '%' in str(value) or value < 1.0:
+        return value * 0.398 * 0.5
+    else:
+        return value * 1.33 * role_info['attack'] / 100
+
+
+def cal_defense_grade(role_info, value):
+    """
+    防御评分计算
+    :param role_info 角色配置信息
+    :param value 属性值
+    """
+    if '%' in str(value) or Decimal(str(value)) < Decimal(1):
+        return value * 0.335 * 0.66
+    else:
+        return value * 1.06 * role_info['defense'] / 100
+
+
+def cal_health_grade(role_info, value):
+    """
+    生命值评分计算
+    :param role_info 角色配置信息
+    :param value 属性值
+    """
+    if '%' in str(value) or Decimal(str(value)) < Decimal(1):
+        return value * 0.026 * 0.66
+    else:
+        return value * 1.33 * role_info['health'] / 100
+
+
+def cal_elemental_mastery_grade(role_info, value):
+    """
+    元素精通评分计算
+    :param role_info 角色配置信息
+    :param value 属性值
+    """
+    return value * 0.33 * role_info['elemental_mastery'] / 100
+
+
+def cal_energy_recharge_grade(role_info, value):
+    """
+    充能效率评分计算
+    :param role_info 角色配置信息
+    :param value 属性值
+    """
+    return value * 1.1979 * role_info['energy_recharge'] / 100
+
+
+def cal_critical_rate_grade(role_info, value):
+    """
+    暴击率评分计算
+    :param role_info 角色配置信息
+    :param value 属性值
+    """
+    return value * 2 * role_info['critical_rate'] / 100
+
+
+def cal_critical_damage_grade(role_info, value):
+    """
+    暴击伤害评分计算
+    :param role_info 角色配置信息
+    :param value 属性值
+    """
+    return value * 1 * role_info['critical_damage'] / 100
+
+
+cal_dict = {
+    "攻击力": cal_attack_grade,
+    "防御力": cal_defense_grade,
+    "生命值": cal_health_grade,
+    "元素精通": cal_elemental_mastery_grade,
+    "元素充能效率": cal_energy_recharge_grade,
+    "暴击率": cal_critical_rate_grade,
+    "暴击伤害": cal_critical_damage_grade,
+}
 
 
 class AnalysisJob(QThread):
@@ -77,6 +165,8 @@ class AnalysisJob(QThread):
 
         # 分析进度条
         total_count = int(len(tableData) / len(Data.table_heads))
+        # 推荐列表
+        commend_list = []
         if total_count > 0:
             self.appendOut.emit("<span style='color: rgb(86, 177, 110);'>开始分析数据...</span>")
 
@@ -122,15 +212,27 @@ class AnalysisJob(QThread):
                 # 清洗出符合推荐套装的圣遗物
                 accord_list = []
                 for name in role_info['commend_artifacts'].split(','):
-                    # 符合推荐套装的圣遗物列表
-                    commend_list = artifact_map[name]
-                    # 主属性清洗
-                    for artifact_info in commend_list:
+                    # 符合推荐套装的圣遗物列表, 主属性清洗
+                    for artifact_info in artifact_map[name]:
                         if check_main_attr(artifact_info, role_info):
                             accord_list.append(artifact_info)
                 progress_bar += f"<span style='color: rgb(96, 135, 237);'>&nbsp;&nbsp;符合圣遗物数量：{len(accord_list)}</span>"
                 self.replaceOut.emit(progress_bar)
-                # print(json.dumps(accord_list, ensure_ascii=False))
+                # TODO 清洗结果打分
+                grade_dict = {}
+                for artifact_info in accord_list:
+                    grade = cal_artifact_grade(role_info, artifact_info)
+                    if grade > grade_dict.get(artifact_info['slot'], Decimal(0.0)):
+                        grade_dict[artifact_info['slot']] = grade
+
+                for key, value in grade_dict.items():
+                    # TODO index改成json数据
+                    commend_list.append({
+                        "index": 1,
+                        "role_name": role_info['role_name'],
+                        "slot": key,
+                        "grade": value
+                    })
                 time.sleep(0.1)
 
         self.appendOut.emit("<span style='color: rgb(86, 177, 110);'>数据分析完毕...</span>")
@@ -142,6 +244,29 @@ class AnalysisJob(QThread):
             f"<span style='color: rgb(86, 177, 110);'>以下角色未配置推荐套装：{not_commend_roles}</span>")
         self.appendOut.emit(
             f"<span style='color: rgb(86, 177, 110);'>以下角色未配置主属性要求：{not_main_roles}</span>")
+        for commend_info in commend_list:
+            self.appendOut.emit(
+                f"<span style='color: rgb(86, 177, 110);'>建议角色：{commend_info['role_name']}，"
+                f"装备推荐索引：{commend_info['index']}，"
+                f"装备部位：{commend_info['slot']}，</span>"
+                f"<span style='color: rgb(209, 89, 82);'>评分：{round(commend_info['grade'], 2)}</span>")
+
+
+def check_main_attr(artifact_info, role_table_data):
+    """
+    检测圣遗物主属性是否符合要求
+    :param artifact_info 圣遗物信息
+    :param role_table_data 角色配置信息
+    :return True：符合
+    """
+    main_attr = artifact_info['main_tag']['name']
+    if artifact_info['slot'] == "理之冠":
+        return main_attr == role_table_data['head_main']
+    elif artifact_info['slot'] == "空之杯":
+        return main_attr == role_table_data['cup_main']
+    elif artifact_info['slot'] == "时之沙":
+        return main_attr == role_table_data['sand_main']
+    return True
 
 
 if __name__ == '__main__':
