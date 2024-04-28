@@ -36,9 +36,9 @@ def cal_attack_grade(role_info, value):
     :param value 属性值
     """
     if '%' in str(value) or value < 1.0:
-        return value * 0.398 * 0.5
-    else:
         return value * 1.33 * role_info['attack'] / 100
+    else:
+        return value * 0.398 * 0.5
 
 
 def cal_defense_grade(role_info, value):
@@ -48,9 +48,9 @@ def cal_defense_grade(role_info, value):
     :param value 属性值
     """
     if '%' in str(value) or Decimal(str(value)) < Decimal(1):
-        return value * 0.335 * 0.66
-    else:
         return value * 1.06 * role_info['defense'] / 100
+    else:
+        return value * 0.335 * 0.66
 
 
 def cal_health_grade(role_info, value):
@@ -60,9 +60,9 @@ def cal_health_grade(role_info, value):
     :param value 属性值
     """
     if '%' in str(value) or Decimal(str(value)) < Decimal(1):
-        return value * 0.026 * 0.66
-    else:
         return value * 1.33 * role_info['health'] / 100
+    else:
+        return value * 0.026 * 0.66
 
 
 def cal_elemental_mastery_grade(role_info, value):
