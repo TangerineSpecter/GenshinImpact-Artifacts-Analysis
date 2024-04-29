@@ -4,6 +4,7 @@ import os
 import re
 
 import cv2
+import numpy as np
 from PySide6.QtCore import QThread, Signal
 
 import Utils.Constant as Constant
@@ -12,8 +13,8 @@ from Config.OcrCoordinateConfig import entry_position_dict
 from Utils.FileUtils import FileOper
 
 entry_list = ["防御力", "暴击率", "暴击伤害", "生命值", "攻击力", "元素精通",
-              "元素充能效率", "岩元素伤害加成", "水元素伤害加成", "草元素伤害加成",
-              "物理元素伤害加成", "雷元素伤害加成", "火元素伤害加成", "风元素伤害加成", '治疗加成']
+              "元素充能效率", "岩元素伤害加成", "水元素伤害加成", "草元素伤害加成", "冰元素伤害加成",
+              "物理伤害加成", "雷元素伤害加成", "火元素伤害加成", "风元素伤害加成", '治疗加成']
 '''词条列表'''
 
 
@@ -72,12 +73,14 @@ class SyncJob(QThread):
             filename = image_files[index]
             self.statusOut.emit(f"圣遗物数据解析进度：({index + 1}/{total_count})")
             if filename.endswith(".jpg"):
-                data = {'index': index + 1}
+                data = {'index': re.findall(r'\d+', filename)[0]}
                 # 读取圣遗物图片
                 image_path = os.path.join(image_folder, filename)
                 ori_image = cv2.imread(image_path)
                 gray_img = cv2.cvtColor(ori_image, cv2.COLOR_BGR2GRAY)
-                image = cv2.bitwise_not(gray_img)
+                # 调整亮度和对比度
+                adjusted_img = cv2.convertScaleAbs(gray_img, alpha=1.5, beta=30)
+                image = cv2.bitwise_not(adjusted_img)
 
                 # 根据配置字典遍历识别
                 for entry in entry_position_dict.keys():
@@ -153,4 +156,21 @@ if __name__ == '__main__':
     # json1['test'] = data1
     # print(json1)
     # print(re.search("", "测试").group(1))
-    print(match_text("攻击力+10", entry_position_dict['children_tag_1']))
+    ori_image = cv2.imread("../test/artifact-77.jpg")
+    gray_img = cv2.cvtColor(ori_image, cv2.COLOR_BGR2GRAY)
+    adjusted_img = cv2.convertScaleAbs(gray_img, alpha=1.2, beta=30)
+    # 对调整后的图像进行反色处理
+    # image = cv2.bitwise_not(adjusted_img)
+
+    position_info = entry_position_dict["children_tag_4"]
+    img = adjusted_img[position_info['left_top'][1]:position_info['right_bottom'][1],
+          position_info['left_top'][0]:position_info['right_bottom'][0]]
+    cv2.imshow("title", img)
+    cv2.waitKey(0)
+    from cnocr import CnOcr
+
+    ocr = CnOcr()
+    info = ocr.ocr_for_single_line(img)
+    print(info)
+
+    # print(match_text("攻击力+11.1%", entry_position_dict['children_tag_1']))

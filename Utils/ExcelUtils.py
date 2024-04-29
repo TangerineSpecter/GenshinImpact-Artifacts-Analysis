@@ -123,14 +123,14 @@ def export_analysis_data():
     for index, item in enumerate(analysis_data, start=1):
         img_path = f"{config_dir}/{artifact_dir}/artifact-{item['index']}.jpg"
         img = Image(img_path)
-        img.width = img.width / 5
-        img.height = img.height / 5
+        img.width = img.width / 1.5
+        img.height = img.height / 1.5
         ws.add_image(img, f'A{index + 1}')
         # 其他数据
         row = index + 1
         ws[f'B{row}'] = item['role_name']
         ws[f'C{row}'] = item['slot']
-        ws[f'D{row}'] = item['grade']
+        ws[f'D{row}'] = round(item['grade'], 2)
         # 设置单元格的列宽和行高以适应图片大小
         ws.row_dimensions[row].height = img.height
     # ws.column_dimensions['A'].width = 50

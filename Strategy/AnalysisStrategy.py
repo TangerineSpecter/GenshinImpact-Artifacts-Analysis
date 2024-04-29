@@ -15,7 +15,7 @@ def cal_artifact_grade(role_info, artifact_info):
     total_grade = 0.0
     # 主标签(默认暴击、爆伤 + lv分数)
     main_tag = artifact_info['main_tag']['name']
-    level = artifact_info['level']
+    level = float(artifact_info['level'])
     if main_tag in ["暴击率", "暴击伤害"]:
         total_grade += level
     # 子标签
@@ -23,7 +23,7 @@ def cal_artifact_grade(role_info, artifact_info):
     for tag_info in children_tags:
         tag_name = tag_info['name']
         if tag_name in cal_dict:
-            value = tag_info['value']
+            value = float(tag_info['value'])
             grade = cal_dict[tag_name](role_info, value)
             total_grade += grade
     return total_grade
@@ -207,7 +207,7 @@ class AnalysisJob(QThread):
                 progress_bar += f"<span style='color: rgb(96, 135, 237);'>&nbsp;&nbsp;符合圣遗物数量：{len(accord_list)}</span>"
                 self.replaceOut.emit(progress_bar)
 
-                # 角色各部位评分字典 key：部位，value：评分
+                # 角色各部位评分字典 key：部位，value：[评分，索引]
                 grade_dict = {}
                 # 遍历筛选出的圣遗物 并打分
                 for artifact_info in accord_list:
@@ -216,16 +216,15 @@ class AnalysisJob(QThread):
                     if grade < equip_dict.get('slot', 0.0):
                         continue
                     # 超过上一次记录
-                    if grade > grade_dict.get(artifact_info['slot'], 0.0):
-                        grade_dict[artifact_info['slot']] = grade
+                    if grade > grade_dict.get(artifact_info['slot'][0], 0.0):
+                        grade_dict[artifact_info['slot']] = [grade, artifact_info['index']]
 
-                for slot, grade in grade_dict.items():
-                    # TODO index改成json数据
+                for slot, item in grade_dict.items():
                     commend_list.append({
-                        "index": 1,
+                        "index": item[1],
                         "role_name": role_info['role_name'],
                         "slot": slot,
-                        "grade": grade
+                        "grade": item[0]
                     })
                 # time.sleep(2)
 
@@ -244,6 +243,7 @@ class AnalysisJob(QThread):
         if len(commend_list) == 0:
             self.appendOut.emit(f"<span style='color: rgb(86, 177, 110);'>^_^无建议装备圣遗物，可以全部清理</span>")
         for commend_info in commend_list:
+            print(commend_info)
             self.appendOut.emit(
                 f"<span style='color: rgb(86, 177, 110);'>建议角色：</span>"
                 f"<span style='color: white;'>{commend_info['role_name'].ljust(5, ' ').replace(' ', 4 * '&nbsp;')}"

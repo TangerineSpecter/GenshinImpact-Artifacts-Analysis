@@ -688,7 +688,7 @@ class SubAnalysisWindow(QDialog):
 
     def __init__(self):
         super().__init__()
-        self.progress_dialog = QProgressDialog(self)
+        self.progress_dialog = None
         self.analysisJob = None
         self.is_job_running = False
         self.setWindowTitle("圣遗物分析")
@@ -768,7 +768,8 @@ class SubAnalysisWindow(QDialog):
             self.analysisJob.finishOut.connect(lambda: self.export_job_finish())
             self.analysisJob.start()
             # loading框
-            self.progress_dialog.setLabelText('开始同步数据，请稍等...')
+            self.progress_dialog = QProgressDialog(self)
+            self.progress_dialog.setLabelText('开始导出数据，请稍等...')
             self.progress_dialog.setRange(0, 0)  # 设置为无限进度条（即不确定进度）
             self.progress_dialog.setModal(True)  # 设置为模态对话框，阻塞用户输入
             self.progress_dialog.setCancelButton(None)
