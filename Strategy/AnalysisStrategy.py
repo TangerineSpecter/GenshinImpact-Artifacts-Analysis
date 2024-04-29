@@ -127,14 +127,12 @@ class AnalysisJob(QThread):
         """
         分析数据
         """
-        # TODO 分析打印待实现  ━ 605.3/605.3 kB 787.7 kB/s eta 0:00:00
         try:
             self.appendOut.emit("<span style='color: rgb(86, 177, 110);'>组件加载中...</span>")
 
             time.sleep(1)
 
             # 获取文本编辑框的文本内容
-            self.appendOut.emit("<span style='color: rgb(86, 177, 110);'>开始分析...</span>")
             self.appendOut.emit("<span style='color: rgb(86, 177, 110);'>开始分析...</span>")
 
             self.analysis_artifact_data()
@@ -190,10 +188,7 @@ class AnalysisJob(QThread):
                 progress = int((index + 1) / total_count * 20)
                 # 构建进度条字符串
                 fill_blank = '口' * (20 - progress)
-                # progress_bar = f"<span style='color: rgb(114, 173, 51);'>[ {('━' * progress)}{fill_blank} ]</span>" \
-                #                f"<span style='color: rgb(209, 89, 82);'>&nbsp;&nbsp;分析进度：{index + 1} / {total_count}</span>" \
-                #                f"<span style='color: rgb(96, 135, 237);'>&nbsp;&nbsp;当前分析角色：{artifact_list[index]['main_name']} - {artifact_list[index]['children_name']}</span>"
-                progress_bar = f"<span style='font-family: MiSans;color: rgb(114, 173, 51);'>[ {('█' * progress)}{fill_blank} ]</span>" \
+                progress_bar = f"<span style='color: rgb(114, 173, 51);'>[ {('█' * progress)}{fill_blank} ]</span>" \
                                f"<span style='color: rgb(209, 89, 82);'>&nbsp;&nbsp;分析进度：{index + 1} / {total_count}</span>" \
                                f"<span style='color: rgb(96, 135, 237);'>&nbsp;&nbsp;当前分析角色：{role_info['role_name']}</span>"
                 self.replaceOut.emit(progress_bar)
@@ -208,69 +203,100 @@ class AnalysisJob(QThread):
                     not_main_roles.append(role_info['role_name'])
                     continue
 
-                # TODO 按照推荐套装计算评分\计算主属性\跟当前装备套装比对
-                # 清洗出符合推荐套装的圣遗物
-                accord_list = []
-                for name in role_info['commend_artifacts'].split(','):
-                    # 符合推荐套装的圣遗物列表, 主属性清洗
-                    for artifact_info in artifact_map[name]:
-                        if check_main_attr(artifact_info, role_info):
-                            accord_list.append(artifact_info)
+                accord_list, equip_dict = get_accord_list(artifact_map, role_info)
                 progress_bar += f"<span style='color: rgb(96, 135, 237);'>&nbsp;&nbsp;符合圣遗物数量：{len(accord_list)}</span>"
                 self.replaceOut.emit(progress_bar)
-                # TODO 清洗结果打分
+
+                # 角色各部位评分字典 key：部位，value：评分
                 grade_dict = {}
+                # 遍历筛选出的圣遗物 并打分
                 for artifact_info in accord_list:
                     grade = cal_artifact_grade(role_info, artifact_info)
+                    # 未超过自身装备，跳过
+                    if grade < equip_dict['slot']:
+                        continue
+                    # 超过上一次记录
                     if grade > grade_dict.get(artifact_info['slot'], Decimal(0.0)):
                         grade_dict[artifact_info['slot']] = grade
 
-                for key, value in grade_dict.items():
+                for slot, grade in grade_dict.items():
                     # TODO index改成json数据
                     commend_list.append({
                         "index": 1,
                         "role_name": role_info['role_name'],
-                        "slot": key,
-                        "grade": value
+                        "slot": slot,
+                        "grade": grade
                     })
-                time.sleep(0.1)
+                # time.sleep(2)
 
         self.appendOut.emit("<span style='color: rgb(86, 177, 110);'>数据分析完毕...</span>")
 
         # 输出分析结果
         self.appendOut.emit("<br>")
-        self.appendOut.emit("<span style='color: rgb(86, 177, 110);'>=================分析结果=================</span>")
         self.appendOut.emit(
-            f"<span style='color: rgb(86, 177, 110);'>以下角色未配置推荐套装：{not_commend_roles}</span>")
+            "<span style='color: rgb(86, 177, 110);'>⋆˚｡✦⋆─────✦─────⋆✧⋆分析结果⋆✧⋆─────✦─────⋆˚｡✦⋆</span>")
         self.appendOut.emit(
-            f"<span style='color: rgb(86, 177, 110);'>以下角色未配置主属性要求：{not_main_roles}</span>")
+            f"<span style='color: rgb(86, 177, 110);'>以下角色未配置推荐套装：</span>"
+            f"<span style='color: white;'>{not_commend_roles}</span>")
+        self.appendOut.emit(
+            f"<span style='color: rgb(86, 177, 110);'>以下角色未配置主属性要求：</span>"
+            f"<span style='color: white;'>{not_main_roles}</span>")
+        if len(commend_list) == 0:
+            self.appendOut.emit(f"<span style='color: rgb(86, 177, 110);'>^_^无建议装备圣遗物，可以全部清理</span>")
         for commend_info in commend_list:
             self.appendOut.emit(
-                f"<span style='color: rgb(86, 177, 110);'>建议角色：{commend_info['role_name']}，"
-                f"装备推荐索引：{commend_info['index']}，"
-                f"装备部位：{commend_info['slot']}，</span>"
+                f"<span style='color: rgb(86, 177, 110);'>建议角色：</span>"
+                f"<span style='color: white;'>{commend_info['role_name'].ljust(5, ' ').replace(' ', 4 * '&nbsp;')}"
+                f"&nbsp;&nbsp;|&nbsp;&nbsp;</span>"
+                f"<span style='color: rgb(86, 177, 110);'>装备推荐索引：{commend_info['index']}&nbsp;&nbsp;|&nbsp;&nbsp;装备部位：</span>"
+                f"<span style='color: rgb(96, 135, 237);'>{commend_info['slot']}&nbsp;&nbsp;|&nbsp;&nbsp;</span>"
                 f"<span style='color: rgb(209, 89, 82);'>评分：{round(commend_info['grade'], 2)}</span>")
 
 
-def check_main_attr(artifact_info, role_table_data):
+def get_accord_list(artifact_map, role_info):
+    """
+    清洗出符合推荐圣遗物数据
+    :return 推荐圣遗物列表，角色已装备圣遗物字典
+    """
+    # 清洗出符合推荐套装的圣遗物
+    accord_list = []
+    # 已装备字典，key：部位，value：评分
+    equip_dict = {}
+    for name in role_info['commend_artifacts'].split(','):
+        # 符合推荐套装 \ 符合主属性要求 \ 无人装备 \ 记录自身装备
+        for artifact_info in artifact_map[name]:
+            if artifact_info['equip_role'] == role_info['role_name']:
+                equip_dict[artifact_info['slot']] = cal_artifact_grade(role_info, artifact_info)
+                continue
+            if check_main_attr(artifact_info, role_info) \
+                    and len(artifact_info['equip_role']) == 0:
+                accord_list.append(artifact_info)
+    return accord_list, equip_dict
+
+
+def check_main_attr(artifact_info, role_info):
     """
     检测圣遗物主属性是否符合要求
     :param artifact_info 圣遗物信息
-    :param role_table_data 角色配置信息
+    :param role_info 角色配置信息
     :return True：符合
     """
     main_attr = artifact_info['main_tag']['name']
     if artifact_info['slot'] == "理之冠":
-        return main_attr == role_table_data['head_main']
+        return main_attr == role_info['head_main']
     elif artifact_info['slot'] == "空之杯":
-        return main_attr == role_table_data['cup_main']
+        return main_attr == role_info['cup_main']
     elif artifact_info['slot'] == "时之沙":
-        return main_attr == role_table_data['sand_main']
+        return main_attr == role_info['sand_main']
     return True
 
 
 if __name__ == '__main__':
     print(len('━'))
+
+    print(len("测试测试"))
+    print("来欧".ljust(5, '口').replace('口', '&nbsp;'))
+    print(len("来欧司朗".ljust(5, '口').replace(' ', '&nbsp;')))
     # for index in range(30):
     #     print("[", ('█' * index).ljust(30), "]")
     # artifact_list = FileOper.load_config_file(f"/Users/zhouliangjun/Documents/temp/data/artifact_data.json")
