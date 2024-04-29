@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import json
+import os
 import platform
 
 from PySide6.QtCore import (QCoreApplication, QMetaObject, QRect, QStringListModel, Qt)
@@ -137,6 +139,20 @@ class MainApp(object):
         self.removeItemBtn.clicked.connect(self.removeTableItem)
         self.removeItemBtn.setText(QCoreApplication.translate("MainWindow", "移除", None))
 
+        # 导出按钮按钮
+        self.exportItemBtn = QPushButton(self.groupBox)
+        self.exportItemBtn.setObjectName(u"exportItemBtn")
+        self.exportItemBtn.setGeometry(QRect(400, 310, 80, 40))
+        self.exportItemBtn.clicked.connect(self.exportTableData)
+        self.exportItemBtn.setText(QCoreApplication.translate("MainWindow", "导出数据", None))
+
+        # 导入按钮按钮
+        self.importItemBtn = QPushButton(self.groupBox)
+        self.importItemBtn.setObjectName(u"importItemBtn")
+        self.importItemBtn.setGeometry(QRect(510, 310, 80, 40))
+        self.importItemBtn.clicked.connect(self.importTableData)
+        self.importItemBtn.setText(QCoreApplication.translate("MainWindow", "导入数据", None))
+
     def __syncData(self):
         QMessageBox.information(self.centralWidget, '提示', '开始同步数据，请稍等...', QMessageBox.Ok)
         self.syncJob.start()
@@ -272,7 +288,8 @@ class MainApp(object):
         """
         BtnCss.blue(self.openFileBtn)
         BtnCss.blue(self.addItemBtn)
-        # BtnCss.orange(self.settingItemBtn)
+        BtnCss.orange(self.importItemBtn)
+        BtnCss.green(self.exportItemBtn)
         BtnCss.red(self.removeItemBtn)
         BtnCss.blue(self.startGameBtn)
         BtnCss.purple(self.analysisBtn)
@@ -347,6 +364,15 @@ class MainApp(object):
             self.tableWidget.setItem(rowCount, columnIndex, item)
         self.__refreshTableCache()
 
+    def clear_table_data(self):
+        """
+        清空表格数据
+        """
+        self.tableWidget.clearContents()
+        self.tableWidget.setRowCount(0)
+        self.__refreshTableCache()
+        print("清空数据")
+
     def addListViewItem(self):
         """
         添加list数据到table
@@ -398,6 +424,36 @@ class MainApp(object):
         if reply == QMessageBox.Yes:
             self.tableWidget.removeRow(select_item[0].row())
             self.__refreshTableCache()
+
+    def exportTableData(self):
+        """
+        导出表格数据
+        """
+        folder_path = QFileDialog.getExistingDirectory(self.tableWidget, "选择文件夹", options=QFileDialog.ShowDirsOnly)
+
+        if folder_path:
+            default_filename = "genshin-impact-data.json"  # 默认文件名
+            file_path = os.path.join(folder_path, default_filename)
+            # 在这里可以进行保存文件的操作，例如写入数据到文件
+            with open(file_path, 'w') as file:
+                file.write(json.dumps(Data.table_data_2_list(self.tableData), indent=4, ensure_ascii=False))
+            QMessageBox.information(self.centralWidget, '提示', '导出数据完毕', QMessageBox.Ok)
+
+    def importTableData(self):
+        """
+        导入表格数据
+        """
+        file_dialog = QFileDialog()
+        file_dialog.setFileMode(QFileDialog.ExistingFile)
+        file_dialog.setNameFilter("Executable Files (*.json)")
+
+        if file_dialog.exec():
+            file_path = file_dialog.selectedFiles()[0]
+            json_list_str = FileOper.load_file(file_path)
+            self.clear_table_data()
+            for json_data in json.loads(json_list_str):
+                self.addTableItem(Data.obj_2_table_data(json_data))
+            QMessageBox.information(self.centralWidget, '提示', '导入数据完毕', QMessageBox.Ok)
 
     def __refreshTableCache(self):
         """

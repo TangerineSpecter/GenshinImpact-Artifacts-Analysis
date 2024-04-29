@@ -217,12 +217,22 @@ def cvdata_2_json_data(cv_data):
     return json_data
 
 
+def table_data_2_list(tableData):
+    """
+    将表格数据转换成json数据列表
+    """
+    json_list = []
+    for index in range(int(len(tableData) / len(table_heads))):
+        json_list.append(table_data_2_obj(index, tableData))
+    return json_list
+
+
 def table_data_2_obj(index, tableData):
     """
     根据索引切割table数据为对象数据
     :return 对象数据
     """
-    role_info = tableData[(index * 12):(index + 1) * 12]
+    role_info = tableData[(index * len(table_heads)):(index + 1) * len(table_heads)]
     return {
         "role_name": role_info[0],
         "commend_artifacts": role_info[1].replace('--', ''),
@@ -237,3 +247,24 @@ def table_data_2_obj(index, tableData):
         "elemental_mastery": int(role_info[10]),
         "energy_recharge": int(role_info[11])
     }
+
+
+def obj_2_table_data(data):
+    """
+    对象数据转为table数据
+    :return table_data数据，格式[xxx,xxx,xxx]
+    """
+    return [
+        str(data["role_name"]),
+        str(data["commend_artifacts"]),
+        str(data["head_main"]),
+        str(data["cup_main"]),
+        str(data["sand_main"]),
+        str(data["attack"]),
+        str(data["defense"]),
+        str(data["health"]),
+        str(data["critical_rate"]),
+        str(data["critical_damage"]),
+        str(data["elemental_mastery"]),
+        str(data["energy_recharge"])
+    ]

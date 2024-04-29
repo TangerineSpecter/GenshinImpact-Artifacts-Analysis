@@ -44,4 +44,4 @@ class AnalysisExportJob(QThread):
             export_analysis_data()
             self.finishOut.emit()
         except Exception as e:
-            self.finishOut.emit("导出数据不存在或者存在异常")
+            self.finishOut.emit()
