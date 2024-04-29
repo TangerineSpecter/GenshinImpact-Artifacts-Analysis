@@ -2,7 +2,7 @@ from PySide6.QtCore import QThread, Signal
 
 import Utils.DataUtils as Data
 from Utils import Constant
-from Utils.ExcelUtils import export_artifact_data
+from Utils.ExcelUtils import export_artifact_data, export_analysis_data
 from Utils.FileUtils import FileOper
 
 
@@ -26,3 +26,22 @@ class ExportJob(QThread):
             self.statusOut.emit("Excel数据导出完毕")
         except Exception as e:
             self.statusOut.emit("导出数据不存在或者存在异常")
+
+
+class AnalysisExportJob(QThread):
+    # 状态通知信号
+    finishOut = Signal()
+
+    def __init__(self):
+        super(AnalysisExportJob, self).__init__()
+
+    def run(self):
+        """
+        导出excel数据
+        """
+        try:
+            # 处理数据
+            export_analysis_data()
+            self.finishOut.emit()
+        except Exception as e:
+            self.finishOut.emit("导出数据不存在或者存在异常")

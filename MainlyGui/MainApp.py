@@ -6,10 +6,11 @@ from PySide6.QtGui import (QAction, QIcon, QCursor)
 from PySide6.QtWidgets import (QGridLayout, QMenu, QFileDialog, QTableWidget, QListView, QGroupBox,
                                QMenuBar, QWidget, QMessageBox, QPushButton, QTextEdit, QLabel, QVBoxLayout,
                                QTableWidgetItem, QHeaderView, QAbstractItemView, QStatusBar, QDialog, QComboBox,
-                               QStyledItemDelegate, QListWidget, QListWidgetItem, QToolTip)
+                               QStyledItemDelegate, QListWidget, QListWidgetItem, QToolTip, QHBoxLayout,
+                               QProgressDialog)
 
 from Strategy.AnalysisStrategy import AnalysisJob
-from Strategy.ExcelStrategy import ExportJob
+from Strategy.ExcelStrategy import ExportJob, AnalysisExportJob
 
 ################################################################################
 ## Form generated from reading UI file 'StarRail.ui'
@@ -614,6 +615,7 @@ def show_analysis():
 
 
 class SubLogWindow(QDialog):
+
     def __init__(self):
         super().__init__()
         self.setWindowTitle("查看日志")
@@ -634,6 +636,7 @@ class SubAnalysisWindow(QDialog):
 
     def __init__(self):
         super().__init__()
+        self.progress_dialog = QProgressDialog(self)
         self.analysisJob = None
         self.is_job_running = False
         self.setWindowTitle("圣遗物分析")
@@ -647,12 +650,25 @@ class SubAnalysisWindow(QDialog):
         self.textEdit.setReadOnly(True)
         layout.addWidget(self.textEdit)
 
-        self.analysisBtn = QPushButton()
-        self.analysisBtn.setObjectName(u"openFileBtn")
-        self.analysisBtn.setGeometry(QRect(530, 10, 80, 40))
-        self.analysisBtn.clicked.connect(lambda: self.analysis_data())
-        self.analysisBtn.setText(QCoreApplication.translate("MainWindow", "分析", None))
-        layout.addWidget(self.analysisBtn)
+        btnLayout = QHBoxLayout()
+        self.analysisDialogBtn = QPushButton()
+        self.analysisDialogBtn.setObjectName(u"analysisDialogBtn")
+        self.analysisDialogBtn.clicked.connect(lambda: self.analysis_data())
+        self.analysisDialogBtn.setText(QCoreApplication.translate("MainWindow", "分析", None))
+        btnLayout.addWidget(self.analysisDialogBtn)
+
+        self.exportDialogBtn = QPushButton()
+        self.is_export = False
+        self.exportDialogBtn.setObjectName(u"exportDialogBtn")
+        self.exportDialogBtn.clicked.connect(lambda: self.export_analysis_data())
+        self.exportDialogBtn.setText(QCoreApplication.translate("MainWindow", "导出", None))
+        btnLayout.addWidget(self.exportDialogBtn)
+        layout.addLayout(btnLayout)
+        # 解禁按钮
+        self.exportDialogBtn.setEnabled(True)
+        BtnCss.blue(self.analysisDialogBtn)
+        BtnCss.gray(self.exportDialogBtn)
+
         self.setLayout(layout)
 
     def append_text(self, text):
@@ -686,7 +702,34 @@ class SubAnalysisWindow(QDialog):
         self.is_job_running = True
 
     def job_finish(self):
+        print("任务结束")
         self.is_job_running = False
+        self.is_export = True
+        BtnCss.green(self.exportDialogBtn)
+
+    def export_analysis_data(self):
+        """
+        导出分析结果
+        """
+        if self.is_export:
+            self.analysisJob = AnalysisExportJob()
+            self.analysisJob.finishOut.connect(lambda: self.export_job_finish())
+            self.analysisJob.start()
+            # loading框
+            self.progress_dialog.setLabelText('开始同步数据，请稍等...')
+            self.progress_dialog.setRange(0, 0)  # 设置为无限进度条（即不确定进度）
+            self.progress_dialog.setModal(True)  # 设置为模态对话框，阻塞用户输入
+            self.progress_dialog.setCancelButton(None)
+            self.progress_dialog.exec()
+            print("导出分析数据")
+            return
+
+    def export_job_finish(self):
+        """
+        导出任务结束
+        """
+        self.progress_dialog.close()
+        QMessageBox.information(self, '提示', '数据导出完毕', QMessageBox.Ok)
 
 
 def show_update_log():

@@ -213,10 +213,10 @@ class AnalysisJob(QThread):
                 for artifact_info in accord_list:
                     grade = cal_artifact_grade(role_info, artifact_info)
                     # 未超过自身装备，跳过
-                    if grade < equip_dict['slot']:
+                    if grade < equip_dict.get('slot', 0.0):
                         continue
                     # 超过上一次记录
-                    if grade > grade_dict.get(artifact_info['slot'], Decimal(0.0)):
+                    if grade > grade_dict.get(artifact_info['slot'], 0.0):
                         grade_dict[artifact_info['slot']] = grade
 
                 for slot, grade in grade_dict.items():
@@ -251,6 +251,7 @@ class AnalysisJob(QThread):
                 f"<span style='color: rgb(86, 177, 110);'>装备推荐索引：{commend_info['index']}&nbsp;&nbsp;|&nbsp;&nbsp;装备部位：</span>"
                 f"<span style='color: rgb(96, 135, 237);'>{commend_info['slot']}&nbsp;&nbsp;|&nbsp;&nbsp;</span>"
                 f"<span style='color: rgb(209, 89, 82);'>评分：{round(commend_info['grade'], 2)}</span>")
+        Data.settings.setValue("analysis_data", commend_list)
 
 
 def get_accord_list(artifact_map, role_info):

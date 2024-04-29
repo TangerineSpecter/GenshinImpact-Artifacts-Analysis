@@ -125,3 +125,24 @@ class BtnCss:
             }
             """
         )
+
+    @staticmethod
+    def gray(btnObj):
+        """灰色按钮样式
+        :param btnObj 按钮对象
+        """
+        btnObj.setStyleSheet(
+            """
+            QPushButton {
+                background-color: #909399;
+                border: 1px solid #909399;
+                color: white;
+                padding: 5px 10px;
+                border-radius: 5px;
+            }
+            QPushButton:hover {
+                background-color: #c8c9cc;
+                border: 1px solid #c8c9cc;
+            }
+            """
+        )
