@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import json
-import os
 import platform
 
 from PySide6.QtCore import (QCoreApplication, QMetaObject, QRect, QStringListModel, Qt)
@@ -432,11 +431,8 @@ class MainApp(object):
         folder_path = QFileDialog.getExistingDirectory(self.tableWidget, "选择文件夹", options=QFileDialog.ShowDirsOnly)
 
         if folder_path:
-            default_filename = "genshin-impact-data.json"  # 默认文件名
-            file_path = os.path.join(folder_path, default_filename)
             # 在这里可以进行保存文件的操作，例如写入数据到文件
-            with open(file_path, 'w') as file:
-                file.write(json.dumps(Data.table_data_2_list(self.tableData), indent=4, ensure_ascii=False))
+            FileOper.save_json_file(folder_path, "genshin-impact-data.json", Data.table_data_2_list(self.tableData))
             QMessageBox.information(self.centralWidget, '提示', '导出数据完毕', QMessageBox.Ok)
 
     def importTableData(self):

@@ -51,9 +51,9 @@ class FileOper:
         return "".join(content)
 
     @staticmethod
-    def save_file(folder_path, filename, data):
+    def save_json_file(folder_path, filename, data):
         """
-        保存文件
+        保存json数据文件
         :param folder_path 文件目录
         :param filename 文件名
         :param data 文件数据
@@ -67,6 +67,25 @@ class FileOper:
                 json.dump(data, target_file, indent=4, ensure_ascii=False)
                 target_file.close()
                 # print("文件写入完毕")
+        except Exception as e:
+            Logging.error(f"文件保存失败: {e.__cause__}")
+
+    @staticmethod
+    def save_file(folder_path, filename, data):
+        """
+        保存文件
+        :param folder_path 文件目录
+        :param filename 文件名
+        :param data 文件数据
+        """
+        try:
+            if not os.path.exists(folder_path):
+                os.makedirs(folder_path)
+
+            file_path = f"{folder_path}/{filename}"
+
+            with open(file_path, "w", encoding='utf-8') as file:
+                file.write(data)
         except Exception as e:
             Logging.error(f"文件保存失败: {e.__cause__}")
 

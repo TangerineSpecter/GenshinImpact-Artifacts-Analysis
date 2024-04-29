@@ -46,8 +46,8 @@ class SyncJob(QThread):
 
         config_dir = Data.settings.value("config_dir")
         if config_dir:
-            FileOper.save_file(f"{config_dir}/{Constant.conf_dir}", "role-data.json", role_list)
-            FileOper.save_file(f"{config_dir}/{Constant.conf_dir}", "artifact-data.json", artifact_list)
+            FileOper.save_json_file(f"{config_dir}/{Constant.conf_dir}", "role-data.json", role_list)
+            FileOper.save_json_file(f"{config_dir}/{Constant.conf_dir}", "artifact-data.json", artifact_list)
             self.statusOut.emit("本地配置文件同步完成")
 
         self.analysis_artifact_data()
