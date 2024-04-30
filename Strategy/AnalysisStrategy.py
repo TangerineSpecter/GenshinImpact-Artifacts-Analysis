@@ -1,3 +1,4 @@
+import json
 import time
 import traceback
 from decimal import Decimal
@@ -236,7 +237,8 @@ class AnalysisJob(QThread):
                                     "role_name": role_info['role_name'],
                                     "slot": artifact_info['slot'],
                                     "grade": 0,
-                                    "advice": "潜力，推荐强化"
+                                    "advice": "潜力，推荐强化",
+                                    "artifact_info": artifact_info
                                 })
                                 continue
                         elif level < 20:
@@ -257,7 +259,8 @@ class AnalysisJob(QThread):
                                     "role_name": role_info['role_name'],
                                     "slot": artifact_info['slot'],
                                     "grade": 0,
-                                    "advice": "词条未歪，推荐强化"
+                                    "advice": "词条未歪，推荐强化",
+                                    "artifact_info": artifact_info
                                 })
                         # 满级才打分，
                         grade = cal_artifact_grade(role_info, artifact_info)
@@ -266,7 +269,7 @@ class AnalysisJob(QThread):
                             continue
                         # 超过上一次记录
                         if grade > grade_dict.get(artifact_info['slot'][0], 0.0):
-                            grade_dict[artifact_info['slot']] = [grade, artifact_info.get('index', 1)]
+                            grade_dict[artifact_info['slot']] = [grade, artifact_info.get('index', 1), artifact_info]
                     except Exception as e:
                         traceback.print_exc()
                         print(f"圣遗物数据异常，{artifact_info}，异常信息：{e}")
@@ -277,7 +280,8 @@ class AnalysisJob(QThread):
                         "role_name": role_info['role_name'],
                         "slot": slot,
                         "grade": item[0],
-                        "advice": "强力，更换装备"
+                        "advice": "强力，更换装备",
+                        "artifact_info": item[2]
                     })
                 # time.sleep(2)
 
@@ -298,7 +302,7 @@ class AnalysisJob(QThread):
         if len(commend_list) == 0:
             self.appendOut.emit(f"<span style='color: rgb(86, 177, 110);'>^_^无建议装备圣遗物，+20 可以全部清理</span>")
         for commend_info in commend_list:
-            print(commend_info)
+            print(json.dumps(commend_info, ensure_ascii=False))
             self.appendOut.emit(
                 f"<span style='color: rgb(86, 177, 110);'>建议角色：</span>"
                 f"<span style='color: white;'>{commend_info['role_name'].ljust(5, ' ').replace(' ', 4 * '&nbsp;')}"
@@ -311,7 +315,6 @@ class AnalysisJob(QThread):
         if len(commend_potential_list) == 0:
             self.appendOut.emit(f"<span style='color: rgb(86, 177, 110);'>^_^无潜力装备圣遗物，+0 可以全部清理</span>")
         for commend_info in commend_potential_list:
-            print(commend_info)
             self.appendOut.emit(
                 f"<span style='color: rgb(86, 177, 110);'>建议角色：</span>"
                 f"<span style='color: white;'>{commend_info['role_name'].ljust(5, ' ').replace(' ', 4 * '&nbsp;')}"
@@ -321,6 +324,16 @@ class AnalysisJob(QThread):
                 f"<span style='color: rgb(209, 89, 82);'>装备拥有潜力</span>")
 
         # 强化未满级/词条未歪
+        if len(commend_up_list) == 0:
+            self.appendOut.emit(f"<span style='color: rgb(86, 177, 110);'>^_^无潜力装备圣遗物，+0 可以全部清理</span>")
+        for commend_info in commend_up_list:
+            self.appendOut.emit(
+                f"<span style='color: rgb(86, 177, 110);'>建议角色：</span>"
+                f"<span style='color: white;'>{commend_info['role_name'].ljust(5, ' ').replace(' ', 4 * '&nbsp;')}"
+                f"&nbsp;&nbsp;|&nbsp;&nbsp;</span>"
+                f"<span style='color: rgb(86, 177, 110);'>装备推荐索引：{commend_info['index']}&nbsp;&nbsp;|&nbsp;&nbsp;装备部位：</span>"
+                f"<span style='color: rgb(96, 135, 237);'>{commend_info['slot']}&nbsp;&nbsp;|&nbsp;&nbsp;</span>"
+                f"<span style='color: rgb(209, 89, 82);'>装备词条未歪，推荐继续强化</span>")
 
         Data.settings.setValue("analysis_data", commend_list)
 
