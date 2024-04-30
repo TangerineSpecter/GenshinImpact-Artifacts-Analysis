@@ -7,11 +7,14 @@ from PySide6.QtGui import (QAction, QIcon, QCursor)
 from PySide6.QtWidgets import (QGridLayout, QMenu, QFileDialog, QTableWidget, QListView, QGroupBox,
                                QMenuBar, QWidget, QMessageBox, QPushButton, QTextEdit, QLabel, QVBoxLayout,
                                QTableWidgetItem, QHeaderView, QAbstractItemView, QStatusBar, QDialog, QComboBox,
-                               QStyledItemDelegate, QListWidget, QListWidgetItem, QToolTip, QHBoxLayout,
-                               QProgressDialog, QLineEdit)
+                               QStyledItemDelegate, QListWidget, QListWidgetItem, QToolTip)
 
-from Strategy.AnalysisStrategy import AnalysisJob
-from Strategy.ExcelStrategy import ExportJob, AnalysisExportJob
+from MainlyGui.AboutFrame import AboutDialog
+from MainlyGui.AnalysisFrame import SubAnalysisWindow
+from MainlyGui.LogFrame import SubLogWindow
+from MainlyGui.MapperFrame import SubMapperWindow
+from MainlyGui.UpdateLogFrame import SubUpdateWindow
+from Strategy.ExcelStrategy import ExportJob
 
 ################################################################################
 ## Form generated from reading UI file 'StarRail.ui'
@@ -27,16 +30,12 @@ from Strategy.MainStrategy import Strategy
 from Strategy.SyncStrategy import SyncJob
 from Utils.CssUtils import (BtnCss)
 from Utils.FileUtils import FileOper
-import Config.SystemInfo as SystemInfo
+from Config.SystemInfo import system_info
 from Config.RoleWeightConfig import role_weight_dict
 from Config.SlotOptionConfig import attr_dict
 import Config.LoggingConfig as Logging
-import Config.UpdateLog as UpdateInfo
 import Utils.DataUtils as Data
 import Utils.Constant as Constant
-
-# 系统信息
-systemInfo = SystemInfo.base_info
 
 
 class MainApp(object):
@@ -48,7 +47,7 @@ class MainApp(object):
         MainWindow.setFixedSize(Constant.window_width, Constant.window_height)
         MainWindow.setWindowIcon(QIcon(Data.get_resource_path(Constant.icon)))
         MainWindow.setWindowTitle(
-            QCoreApplication.translate("MainWindow", f"{systemInfo['title']} v{systemInfo['version']}", None))
+            QCoreApplication.translate("MainWindow", f"{system_info['title']} v{system_info['version']}", None))
 
         # 初始化布局
         self.__initLayout(MainWindow)
@@ -100,14 +99,14 @@ class MainApp(object):
         self.mapperBtn = QPushButton(self.centralWidget)
         self.mapperBtn.setObjectName(u"mapperBtn")
         self.mapperBtn.setGeometry(QRect(Constant.window_width - 110, 150, 80, 40))
-        self.mapperBtn.clicked.connect(lambda: show_mapper())
+        self.mapperBtn.clicked.connect(show_mapper)
         self.mapperBtn.setText(QCoreApplication.translate("MainWindow", "映射", None))
 
         # 分析
         self.analysisBtn = QPushButton(self.centralWidget)
         self.analysisBtn.setObjectName(u"analysisBtn")
         self.analysisBtn.setGeometry(QRect(Constant.window_width - 110, 220, 80, 40))
-        self.analysisBtn.clicked.connect(lambda: show_analysis)
+        self.analysisBtn.clicked.connect(SubAnalysisWindow)
         self.analysisBtn.setText(QCoreApplication.translate("MainWindow", "分析", None))
 
         # 导出
@@ -251,19 +250,19 @@ class MainApp(object):
         # 关于
         self.aboutAction = QAction(MainWindow)
         self.aboutAction.setObjectName(u"aboutAction")
-        self.aboutAction.triggered.connect(show_about_dialog)
+        self.aboutAction.triggered.connect(AboutDialog)
         self.aboutAction.setText(QCoreApplication.translate("MainWindow", "关于", None))
 
         # 更新记录
         self.updateLogAction = QAction(MainWindow)
         self.updateLogAction.setObjectName(u"updateLogAction")
-        self.updateLogAction.triggered.connect(show_update_log)
+        self.updateLogAction.triggered.connect(SubUpdateWindow)
         self.updateLogAction.setText(QCoreApplication.translate("MainWindow", "更新记录", None))
 
         # 日志
         self.logAction = QAction(MainWindow)
         self.logAction.setObjectName(u"logAction")
-        self.logAction.triggered.connect(show_log)
+        self.logAction.triggered.connect(SubLogWindow)
         self.logAction.setText(QCoreApplication.translate("MainWindow", "日志", None))
 
         # 下拉菜单
@@ -644,357 +643,9 @@ class ComboBoxDelegate(QStyledItemDelegate):
         return None
 
 
-class AboutDialog(QMessageBox):
-    def __init__(self, parent=None):
-        super(AboutDialog, self).__init__(parent)
-        self.setWindowTitle("关于")
-        self.setText(f"版本号：{systemInfo['version']}\n"
-                     f"作者：{systemInfo['author']}\n"
-                     f"Bug反馈邮箱：{systemInfo['email']}")
-        self.exec()
-
-
-# 关于对话框
-def show_about_dialog():
-    AboutDialog()
-
-
-def show_log():
-    """
-    打开日志
-    """
-    sub_window = SubLogWindow()
-    # 设置为模态对话框
-    sub_window.setModal(True)
-    sub_window.exec()
-
-
-def show_analysis():
-    """
-    打开分析界面
-    """
-    sub_window = SubAnalysisWindow()
-    # 设置为模态对话框
-    sub_window.setModal(True)
-    sub_window.exec()
-
-
 def show_mapper():
     """
     打开映射界面
     """
     sub_window = SubMapperWindow()
-    # 设置为模态对话框
-    sub_window.setModal(True)
-    sub_window.exec()
     sub_window.refreshTableCache()
-
-
-class SubLogWindow(QDialog):
-
-    def __init__(self):
-        super().__init__()
-        self.setWindowTitle("查看日志")
-
-        layout = QVBoxLayout()
-        self.textEdit = QTextEdit()
-        self.textEdit.setStyleSheet("background-color: rgb(20, 23, 40);")
-        log_content = FileOper.load_log_file("app.log")
-        self.textEdit.setHtml(log_content)
-        self.textEdit.setFixedSize(1000, 400)
-        # 设置为不可编辑
-        self.textEdit.setReadOnly(True)
-        layout.addWidget(self.textEdit)
-        self.setLayout(layout)
-
-
-class SubAnalysisWindow(QDialog):
-
-    def __init__(self):
-        super().__init__()
-        self.progress_dialog = None
-        self.analysisJob = None
-        self.is_job_running = False
-        self.setWindowTitle("圣遗物分析")
-
-        layout = QVBoxLayout()
-        self.textEdit = QTextEdit()
-        self.textEdit.setStyleSheet("background-color: rgb(20, 23, 40);")
-        # self.textEdit.setHtml(log_content)
-        self.textEdit.setFixedSize(1000, 400)
-        # 设置为不可编辑
-        self.textEdit.setReadOnly(True)
-        layout.addWidget(self.textEdit)
-
-        btnLayout = QHBoxLayout()
-        self.analysisDialogBtn = QPushButton()
-        self.analysisDialogBtn.setObjectName(u"analysisDialogBtn")
-        self.analysisDialogBtn.clicked.connect(lambda: self.analysis_data())
-        self.analysisDialogBtn.setText(QCoreApplication.translate("MainWindow", "分析", None))
-        btnLayout.addWidget(self.analysisDialogBtn)
-
-        self.exportDialogBtn = QPushButton()
-        self.is_export = False
-        self.exportDialogBtn.setObjectName(u"exportDialogBtn")
-        self.exportDialogBtn.clicked.connect(lambda: self.export_analysis_data())
-        self.exportDialogBtn.setText(QCoreApplication.translate("MainWindow", "导出", None))
-        self.exportDialogBtn.setEnabled(True)
-        btnLayout.addWidget(self.exportDialogBtn)
-        layout.addLayout(btnLayout)
-        # 解禁按钮
-        BtnCss.blue(self.analysisDialogBtn)
-        BtnCss.gray(self.exportDialogBtn)
-
-        self.setLayout(layout)
-
-    def append_text(self, text):
-        self.textEdit.append(text)
-
-    def replace_text(self, new_line):
-        # 获取当前HTML内容
-        html_content = self.textEdit.toHtml()
-
-        # 分割HTML内容为行
-        lines = html_content.split('</p>')
-
-        # 替换最后一行内容
-        lines[-2] = new_line
-
-        # 重新设置HTML内容
-        new_html_content = '</p>'.join(lines)
-        self.textEdit.setHtml(new_html_content)
-
-    def analysis_data(self):
-        if self.is_job_running:
-            QMessageBox.information(self, '提示', '分析任务执行中，请勿重复执行任务', QMessageBox.Ok)
-            return
-        # 执行前，清空上一次的记录
-        self.textEdit.clear()
-        self.analysisJob = AnalysisJob()
-        self.analysisJob.appendOut.connect(self.append_text)
-        self.analysisJob.replaceOut.connect(self.replace_text)
-        self.analysisJob.finishOut.connect(self.job_finish)
-        self.analysisJob.start()
-        self.is_job_running = True
-
-    def job_finish(self):
-        print("任务结束")
-        self.is_job_running = False
-        self.is_export = True
-        BtnCss.green(self.exportDialogBtn)
-
-    def export_analysis_data(self):
-        """
-        导出分析结果
-        """
-        if self.is_export:
-            self.analysisJob = AnalysisExportJob()
-            self.analysisJob.finishOut.connect(lambda: self.export_job_finish())
-            self.analysisJob.start()
-            # loading框
-            self.progress_dialog = QProgressDialog(self)
-            self.progress_dialog.setLabelText('开始导出数据，请稍等...')
-            self.progress_dialog.setRange(0, 0)  # 设置为无限进度条（即不确定进度）
-            self.progress_dialog.setModal(True)  # 设置为模态对话框，阻塞用户输入
-            self.progress_dialog.setCancelButton(None)
-            self.progress_dialog.exec()
-            print("导出分析数据")
-            return
-
-    def export_job_finish(self):
-        """
-        导出任务结束
-        """
-        self.progress_dialog.close()
-        QMessageBox.information(self, '提示', '数据导出完毕', QMessageBox.Ok)
-
-
-class SubMapperWindow(QDialog):
-
-    def __init__(self):
-        super().__init__()
-        self.setWindowTitle("识别映射配置")
-        self.setFixedSize(300, 400)
-
-        layout = QVBoxLayout()
-        self.tableWidget = QTableWidget(self)
-        self.tableWidget.setObjectName(u"mapperTableView")
-        self.tableWidget.setGeometry(QRect(180, 50, 300, 240))
-        # 禁止编辑单元格
-        self.tableWidget.setEditTriggers(QTableWidget.NoEditTriggers)
-        # 单元格自适应
-        self.tableWidget.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
-        # 最后一列铺满
-        self.tableWidget.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        # 选中整行
-        self.tableWidget.setSelectionBehavior(QTableWidget.SelectRows)
-        self.tableWidget.setSelectionMode(QTableWidget.SingleSelection)
-        self.tableWidget.setMouseTracking(True)
-        self.tableData = Data.settings.value("mapper_table_data", None)
-
-        # 数据
-        column_count = len(Data.mapper_table_heads)
-        self.tableWidget.setColumnCount(column_count)
-        self.tableWidget.setHorizontalHeaderLabels(Data.mapper_table_heads)
-        layout.addWidget(self.tableWidget)
-        if self.tableData is not None:
-            self.addTableItem(self.tableData, rowCount=(len(self.tableData) // column_count))
-
-        # 区域
-        # self.groupBox = QGroupBox(self)
-        # self.groupBox.setObjectName(u"groupBox")
-        # self.groupBox.setFixedHeight(50)
-        # layout.addWidget(self.groupBox)
-
-        # 按钮
-        btnLayout = QHBoxLayout()
-        self.addItemDialogBtn = QPushButton()
-        self.addItemDialogBtn.setObjectName(u"addItemDialogBtn")
-        self.addItemDialogBtn.setGeometry(QRect(15, 5, 80, 40))
-        self.addItemDialogBtn.clicked.connect(lambda: self.addTableItem())
-        self.addItemDialogBtn.setText(QCoreApplication.translate("MainWindow", "添加", None))
-        btnLayout.addWidget(self.addItemDialogBtn)
-
-        self.removeItemDialogBtn = QPushButton()
-        self.removeItemDialogBtn.setObjectName(u"removeItemDialogBtn")
-        self.removeItemDialogBtn.setGeometry(QRect(160, 5, 80, 40))
-        self.removeItemDialogBtn.clicked.connect(lambda: self.removeTableItem())
-        self.removeItemDialogBtn.setText(QCoreApplication.translate("MainWindow", "移除", None))
-        btnLayout.addWidget(self.removeItemDialogBtn)
-
-        BtnCss.blue(self.addItemDialogBtn)
-        BtnCss.red(self.removeItemDialogBtn)
-
-        layout.addLayout(btnLayout)
-        self.setLayout(layout)
-
-    def addTableItem(self, data=None, rowCount=1):
-        """
-        添加表格数据
-        :param data 数据
-        :param rowCount 添加数据行数
-        """
-        # 无数据则弹窗填入
-        if data is None:
-            form_dialog = FormDialog()
-            form_dialog.exec_()
-            data = form_dialog.submitData
-
-        if not data:
-            # 未输入则终止后续执行
-            return
-
-        # 根据上一次行数进行计算
-        start_row_count = self.tableWidget.rowCount()
-        for rowIndex in range(rowCount):
-            self.tableWidget.insertRow(self.tableWidget.rowCount())
-            for columnIndex in range(len(Data.mapper_table_heads)):
-                item = QTableWidgetItem(data[rowIndex * len(Data.mapper_table_heads) + columnIndex])
-                # 设置数据居中
-                item.setTextAlignment(Qt.AlignCenter)
-                # 拼接到上一次行数后面
-                self.tableWidget.setItem(start_row_count + rowIndex, columnIndex, item)
-
-    def removeTableItem(self):
-        """
-        移除表格数据
-        :return:
-        """
-        select_item = self.tableWidget.selectedItems()
-        if not select_item:
-            QMessageBox.information(self, '提示', '未选中数据', QMessageBox.Ok)
-            return
-
-        self.tableWidget.removeRow(select_item[0].row())
-
-    def refreshTableCache(self):
-        """
-        刷新表格缓存数据
-        """
-        # 获取表格的行数和列数
-        rows = self.tableWidget.rowCount()
-        cols = self.tableWidget.columnCount()
-        # 创建一个空列表来存储所有数据
-        all_data = []
-
-        # 遍历表格的每一行和每一列，获取单元格数据
-        for row in range(rows):
-            for col in range(cols):
-                item = self.tableWidget.item(row, col)
-                if item is None:
-                    continue
-                all_data.append(item.text())
-
-        Data.settings.setValue("mapper_table_data", all_data)
-
-
-class FormDialog(QDialog):
-    def __init__(self):
-        super().__init__()
-        self.submitData = []
-        self.setWindowTitle("添加识别映射")
-
-        layout = QVBoxLayout()
-
-        label = QLabel("属性：")
-        self.combobox = QComboBox()
-        self.combobox.addItems(Data.entry_list)
-
-        layout.addWidget(label)
-        layout.addWidget(self.combobox)
-
-        label = QLabel("映射文本：")
-        self.text_input = QLineEdit()
-
-        layout.addWidget(label)
-        layout.addWidget(self.text_input)
-
-        # 添加提交按钮
-        submit_button = QPushButton("提交")
-        submit_button.clicked.connect(self.submit_form)
-        layout.addWidget(submit_button)
-
-        self.setLayout(layout)
-
-        BtnCss.blue(submit_button)
-
-    def submit_form(self):
-        selected_item = self.combobox.currentText()
-        text_input_value = self.text_input.text()
-        self.submitData = [selected_item, text_input_value]
-        self.close()
-
-
-def show_update_log():
-    """
-    更新记录
-    """
-    sub_window = SubUpdateWindow()
-    # 设置为模态对话框
-    sub_window.setModal(True)
-    sub_window.exec()
-
-
-class SubUpdateWindow(QDialog):
-    def __init__(self):
-        super().__init__()
-        self.setWindowTitle("更新记录")
-
-        layout = QVBoxLayout()
-        self.textEdit = QTextEdit()
-        update_log = UpdateInfo.update_log
-        dialog_content = []
-        for info in update_log:
-            c = f"<h3 style='text-align: center;'>更新版本：{info['version']}</h3>" \
-                f"<ul>"
-            for text in info['content']:
-                c += f"<li>{text}</li>"
-            c += "</ul>"
-            dialog_content.append(c)
-        self.textEdit.setHtml("<br>".join(dialog_content))
-        self.textEdit.setFixedSize(500, 600)
-        # 设置为不可编辑
-        self.textEdit.setReadOnly(True)
-        layout.addWidget(self.textEdit)
-
-        self.setLayout(layout)

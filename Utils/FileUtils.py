@@ -111,7 +111,7 @@ class FileOper:
                 log = f"<span style='color: rgb(255, 255, 255);'>{time} |</span> " \
                       f"<span style='color: {level_color_dict.get(level, 'white')};'>{level.ljust(7, ' ').replace(' ', '&nbsp;')}</span> " \
                       f"<span style='color: rgb(86, 177, 110);white-space: pre-line;'>| {text}</span>"
-            template = f"<span style='font-size:14px;font-family:Courier;'>{log}</span>"
+            template = f"<span style='font-size:14px;'>{log}</span>"
             result.append(template)
         return "".join(result)
 
