@@ -6,7 +6,7 @@ defense：防御力
 critical_rate：暴击率
 critical_damage：暴击伤害
 elemental_mastery：元素精通
-energy_recharge：元素充能
+energy_recharge：元素充能效率
 """
 role_weight_dict = {
     '米卡': {

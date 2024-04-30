@@ -1,9 +1,11 @@
 import time
+import traceback
 from decimal import Decimal
 
 from PySide6.QtCore import QThread, Signal
 
 import Utils.DataUtils as Data
+from Config.ArtifactLevelConfig import artifact_level_dict
 from Utils import Constant
 from Utils.FileUtils import FileOper
 
@@ -165,6 +167,10 @@ class AnalysisJob(QThread):
         total_count = int(len(tableData) / len(Data.table_heads))
         # 推荐列表
         commend_list = []
+        # 潜力推荐强化
+        commend_potential_list = []
+        # 推荐强化
+        commend_up_list = []
         if total_count > 0:
             self.appendOut.emit("<span style='color: rgb(86, 177, 110);'>开始分析数据...</span>")
 
@@ -209,22 +215,69 @@ class AnalysisJob(QThread):
 
                 # 角色各部位评分字典 key：部位，value：[评分，索引]
                 grade_dict = {}
+                # 角色 100%的词条
+                max_weight_entry = [key for key, value in role_info.items() if value == 100]
+                # 不推荐词条
+                min_weight_entry = [key for key, value in role_info.items() if value == 0]
+
                 # 遍历筛选出的圣遗物 并打分
                 for artifact_info in accord_list:
-                    grade = cal_artifact_grade(role_info, artifact_info)
-                    # 未超过自身装备，跳过
-                    if grade < equip_dict.get('slot', 0.0):
-                        continue
-                    # 超过上一次记录
-                    if grade > grade_dict.get(artifact_info['slot'][0], 0.0):
-                        grade_dict[artifact_info['slot']] = [grade, artifact_info['index']]
+                    try:
+                        level = artifact_info['level']
+                        if level < 4:
+                            weight_count = 0
+                            # 满足两个100%权重副词条，则推荐潜力
+                            for item in artifact_info['children_tag']:
+                                if Data.tag_dict[item['name']] in max_weight_entry:
+                                    weight_count += 1
+                            if weight_count >= 2:
+                                commend_potential_list.append({
+                                    "index": artifact_info.get('index', 1),
+                                    "role_name": role_info['role_name'],
+                                    "slot": artifact_info['slot'],
+                                    "grade": 0,
+                                    "advice": "潜力，推荐强化"
+                                })
+                                continue
+                        elif level < 20:
+                            # 获取权重为0的词条强化level，如果合计 > 0，则跳过
+                            fail_count = 0
+                            for item in artifact_info['children_tag']:
+                                tag_name = item['name']
+                                tag_value = item['value']
+                                # 小词条/无权重词条 加入计算
+                                if (tag_name in ['攻击力', '防御力', '生命值'] and tag_value > 0) or \
+                                        (tag_name in min_weight_entry):
+                                    for level_item in artifact_level_dict[tag_name]:
+                                        if level_item['min'] < tag_value < level_item['max']:
+                                            fail_count += level_item['level']
+                            if fail_count == 0:
+                                commend_up_list.append({
+                                    "index": artifact_info.get('index', 1),
+                                    "role_name": role_info['role_name'],
+                                    "slot": artifact_info['slot'],
+                                    "grade": 0,
+                                    "advice": "词条未歪，推荐强化"
+                                })
+                        # 满级才打分，
+                        grade = cal_artifact_grade(role_info, artifact_info)
+                        # 未超过自身装备，跳过
+                        if grade < equip_dict.get('slot', 0.0):
+                            continue
+                        # 超过上一次记录
+                        if grade > grade_dict.get(artifact_info['slot'][0], 0.0):
+                            grade_dict[artifact_info['slot']] = [grade, artifact_info.get('index', 1)]
+                    except Exception as e:
+                        traceback.print_exc()
+                        print(f"圣遗物数据异常，{artifact_info}，异常信息：{e}")
 
                 for slot, item in grade_dict.items():
                     commend_list.append({
                         "index": item[1],
                         "role_name": role_info['role_name'],
                         "slot": slot,
-                        "grade": item[0]
+                        "grade": item[0],
+                        "advice": "强力，更换装备"
                     })
                 # time.sleep(2)
 
@@ -240,8 +293,10 @@ class AnalysisJob(QThread):
         self.appendOut.emit(
             f"<span style='color: rgb(86, 177, 110);'>以下角色未配置主属性要求：</span>"
             f"<span style='color: white;'>{not_main_roles}</span>")
+
+        # 推荐装备
         if len(commend_list) == 0:
-            self.appendOut.emit(f"<span style='color: rgb(86, 177, 110);'>^_^无建议装备圣遗物，可以全部清理</span>")
+            self.appendOut.emit(f"<span style='color: rgb(86, 177, 110);'>^_^无建议装备圣遗物，+20 可以全部清理</span>")
         for commend_info in commend_list:
             print(commend_info)
             self.appendOut.emit(
@@ -251,6 +306,22 @@ class AnalysisJob(QThread):
                 f"<span style='color: rgb(86, 177, 110);'>装备推荐索引：{commend_info['index']}&nbsp;&nbsp;|&nbsp;&nbsp;装备部位：</span>"
                 f"<span style='color: rgb(96, 135, 237);'>{commend_info['slot']}&nbsp;&nbsp;|&nbsp;&nbsp;</span>"
                 f"<span style='color: rgb(209, 89, 82);'>评分：{round(commend_info['grade'], 2)}</span>")
+
+        # 未强化的潜力装备
+        if len(commend_potential_list) == 0:
+            self.appendOut.emit(f"<span style='color: rgb(86, 177, 110);'>^_^无潜力装备圣遗物，+0 可以全部清理</span>")
+        for commend_info in commend_potential_list:
+            print(commend_info)
+            self.appendOut.emit(
+                f"<span style='color: rgb(86, 177, 110);'>建议角色：</span>"
+                f"<span style='color: white;'>{commend_info['role_name'].ljust(5, ' ').replace(' ', 4 * '&nbsp;')}"
+                f"&nbsp;&nbsp;|&nbsp;&nbsp;</span>"
+                f"<span style='color: rgb(86, 177, 110);'>装备推荐索引：{commend_info['index']}&nbsp;&nbsp;|&nbsp;&nbsp;装备部位：</span>"
+                f"<span style='color: rgb(96, 135, 237);'>{commend_info['slot']}&nbsp;&nbsp;|&nbsp;&nbsp;</span>"
+                f"<span style='color: rgb(209, 89, 82);'>装备拥有潜力</span>")
+
+        # 强化未满级/词条未歪
+
         Data.settings.setValue("analysis_data", commend_list)
 
 

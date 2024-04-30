@@ -107,7 +107,7 @@ def export_analysis_data():
         raise CustomError("无分析数据")
 
     # 定义表头键值对列表
-    head = ["推荐圣遗物", "角色", "部位", "评分"]
+    head = ["推荐圣遗物", "角色", "部位", "评分", "建议"]
 
     # 创建一个工作簿
     wb = Workbook()
@@ -131,6 +131,7 @@ def export_analysis_data():
         ws[f'B{row}'] = item['role_name']
         ws[f'C{row}'] = item['slot']
         ws[f'D{row}'] = round(item['grade'], 2)
+        ws[f'E{row}'] = item['advice']
         # 设置单元格的列宽和行高以适应图片大小
         ws.row_dimensions[row].height = img.height
     # ws.column_dimensions['A'].width = 50

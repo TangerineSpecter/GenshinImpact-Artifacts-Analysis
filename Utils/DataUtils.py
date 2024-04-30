@@ -38,6 +38,24 @@ entry_list = ["防御力", "暴击率", "暴击伤害", "生命值", "攻击力"
               "物理伤害加成", "雷元素伤害加成", "火元素伤害加成", "风元素伤害加成", '治疗加成', ""]
 '''识别词条列表(最后一个留空处理无法匹配的数据)'''
 
+tag_dict = {
+    'health': '生命值',
+    'attack': '攻击力',
+    'defense': '防御力',
+    'critical_rate': '暴击率',
+    'critical_damage': '暴击伤害',
+    'elemental_mastery': '元素精通',
+    'energy_recharge': '元素充能',
+    '生命值': 'health',
+    '攻击力': 'attack',
+    '防御力': 'defense',
+    '暴击率': 'critical_rate',
+    '暴击伤害': 'critical_damage',
+    '元素精通': 'elemental_mastery',
+    '元素充能效率': 'energy_recharge'
+}
+'''词条字段映射字典'''
+
 
 def get_resource_path(file_path):
     """
