@@ -11,11 +11,6 @@ import Utils.DataUtils as Data
 from Config.OcrCoordinateConfig import entry_position_dict
 from Utils.FileUtils import FileOper
 
-entry_list = ["防御力", "暴击率", "暴击伤害", "生命值", "攻击力", "元素精通",
-              "元素充能效率", "岩元素伤害加成", "水元素伤害加成", "草元素伤害加成", "冰元素伤害加成",
-              "物理伤害加成", "雷元素伤害加成", "火元素伤害加成", "风元素伤害加成", '治疗加成', ""]
-'''词条列表(最后一个留空处理无法匹配的数据)'''
-
 unknown_list = set()
 """未知字段"""
 
@@ -82,9 +77,7 @@ class SyncJob(QThread):
                 image_path = os.path.join(image_folder, filename)
                 ori_image = cv2.imread(image_path)
                 gray_img = cv2.cvtColor(ori_image, cv2.COLOR_BGR2GRAY)
-                # 调整亮度和对比度
-                adjusted_img = cv2.convertScaleAbs(gray_img, alpha=1.5, beta=30)
-                image = cv2.bitwise_not(adjusted_img)
+                image = cv2.bitwise_not(gray_img)
 
                 # 根据配置字典遍历识别
                 for entry in entry_position_dict.keys():
@@ -117,8 +110,17 @@ def match_text(text, position_info):
     :param position_info 坐标配置
     :return: 清洗文本/属性词条，None/属性值
     """
+    # 获取正则表达式
     pattern = position_info.get('pattern', None)
-    for entry in entry_list:
+    # 获取映射列表
+    mapper_data = Data.settings.value("mapper_table_data")
+    mapper_dict = {}
+    column_count = len(Data.mapper_table_heads)
+    for index in range(int(len(mapper_data) / column_count)):
+        mapper_dict[mapper_data[index * column_count + 1]] = mapper_data[index * column_count]
+
+    # 数据加工
+    for entry in Data.entry_list:
         if entry in text and pattern is not None:
             pattern_result = re.search(pattern, text)
             if pattern_result is None:
@@ -127,8 +129,12 @@ def match_text(text, position_info):
             if entry == "":
                 # 使用正则表达式去掉符号和数字
                 entry = re.sub(r'[^\w\s]|\d', '', text)
-                unknown_list.add(entry)
-                print("未识别：", text)
+                # 映射转换
+                if mapper_dict.get(entry) is not None:
+                    entry = mapper_dict.get(entry)
+                else:
+                    unknown_list.add(entry)
+                    print("未识别：", text)
             # 处理正则数据
             attr_value = pattern_result.group(1)
             if "%" in text:
@@ -182,7 +188,14 @@ if __name__ == '__main__':
     # ocr = CnOcr()
     # info = ocr.ocr_for_single_line(img)
     # print(info)
+    mapper_data = Data.settings.value("mapper_table_data")
+    print(mapper_data)
+    mapper_dict = {}
+    column_count = len(Data.mapper_table_heads)
+    for index in range(int(len(mapper_data) / column_count)):
+        mapper_dict[mapper_data[index * column_count + 1]] = mapper_data[index * column_count]
+    print(mapper_dict)
 
     print(match_text('·攻击办+11.1%', entry_position_dict['children_tag_1']))
     print(match_text('·测试+11.1%', entry_position_dict['children_tag_1']))
-    print(unknown_list)
+    # print(unknown_list)

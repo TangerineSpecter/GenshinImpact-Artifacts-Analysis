@@ -146,3 +146,24 @@ class BtnCss:
             }
             """
         )
+
+    @staticmethod
+    def light_orange(btnObj):
+        """浅橙色按钮样式
+        :param btnObj 按钮对象
+        """
+        btnObj.setStyleSheet(
+            """
+            QPushButton {
+                background-color: #e6a23c;
+                border: 1px solid #e6a23c;
+                color: white;
+                padding: 5px 10px;
+                border-radius: 5px;
+            }
+            QPushButton:hover {
+                background-color: #f3d19e;
+                border: 1px solid #f3d19e;
+            }
+            """
+        )

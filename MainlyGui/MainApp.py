@@ -8,7 +8,7 @@ from PySide6.QtWidgets import (QGridLayout, QMenu, QFileDialog, QTableWidget, QL
                                QMenuBar, QWidget, QMessageBox, QPushButton, QTextEdit, QLabel, QVBoxLayout,
                                QTableWidgetItem, QHeaderView, QAbstractItemView, QStatusBar, QDialog, QComboBox,
                                QStyledItemDelegate, QListWidget, QListWidgetItem, QToolTip, QHBoxLayout,
-                               QProgressDialog)
+                               QProgressDialog, QLineEdit)
 
 from Strategy.AnalysisStrategy import AnalysisJob
 from Strategy.ExcelStrategy import ExportJob, AnalysisExportJob
@@ -96,24 +96,31 @@ class MainApp(object):
         self.startGameBtn.clicked.connect(lambda: self.worker.start())
         self.startGameBtn.setText(QCoreApplication.translate("MainWindow", "扫描", None))
 
+        # 识别映射
+        self.mapperBtn = QPushButton(self.centralWidget)
+        self.mapperBtn.setObjectName(u"mapperBtn")
+        self.mapperBtn.setGeometry(QRect(Constant.window_width - 110, 150, 80, 40))
+        self.mapperBtn.clicked.connect(lambda: show_mapper())
+        self.mapperBtn.setText(QCoreApplication.translate("MainWindow", "映射", None))
+
         # 分析
         self.analysisBtn = QPushButton(self.centralWidget)
         self.analysisBtn.setObjectName(u"analysisBtn")
-        self.analysisBtn.setGeometry(QRect(Constant.window_width - 110, 150, 80, 40))
-        self.analysisBtn.clicked.connect(show_analysis)
+        self.analysisBtn.setGeometry(QRect(Constant.window_width - 110, 220, 80, 40))
+        self.analysisBtn.clicked.connect(lambda: show_analysis)
         self.analysisBtn.setText(QCoreApplication.translate("MainWindow", "分析", None))
 
         # 导出
         self.exportBtn = QPushButton(self.centralWidget)
         self.exportBtn.setObjectName(u"exportBtn")
-        self.exportBtn.setGeometry(QRect(Constant.window_width - 110, 220, 80, 40))
+        self.exportBtn.setGeometry(QRect(Constant.window_width - 110, 290, 80, 40))
         self.exportBtn.clicked.connect(lambda: self.exportJob.start())
         self.exportBtn.setText(QCoreApplication.translate("MainWindow", "导出", None))
 
         # 同步
         self.syncBtn = QPushButton(self.centralWidget)
         self.syncBtn.setObjectName(u"syncBtn")
-        self.syncBtn.setGeometry(QRect(Constant.window_width - 110, 290, 80, 40))
+        self.syncBtn.setGeometry(QRect(Constant.window_width - 110, 360, 80, 40))
         self.syncBtn.clicked.connect(lambda: self.__syncData())
         self.syncBtn.setText(QCoreApplication.translate("MainWindow", "同步", None))
 
@@ -196,7 +203,8 @@ class MainApp(object):
         self.textLabel.setStyleSheet("color: red;")
         self.textLabel.setText(
             QCoreApplication.translate("MainWindow",
-                                       f"说明：扫描圣遗物请打开到背包圣遗物界面后执行。^_^", None))
+                                       f"说明：扫描圣遗物请使用 1600 x 900 窗口模式，并打开到背包圣遗物界面后点击扫描。^_^",
+                                       None))
         pass
 
     def __initLayout(self, MainWindow):
@@ -287,22 +295,24 @@ class MainApp(object):
         """
         BtnCss.blue(self.openFileBtn)
         BtnCss.blue(self.addItemBtn)
-        BtnCss.orange(self.importItemBtn)
+        BtnCss.light_orange(self.importItemBtn)
         BtnCss.green(self.exportItemBtn)
         BtnCss.red(self.removeItemBtn)
         BtnCss.blue(self.startGameBtn)
         BtnCss.purple(self.analysisBtn)
         BtnCss.green(self.exportBtn)
         BtnCss.white(self.syncBtn)
+        BtnCss.blue(self.mapperBtn)
         # icon设置
         self.addItemBtn.setIcon(QIcon(Data.get_resource_path("Resource/icon/add.png")))
         # self.settingItemBtn.setIcon(QIcon(Data.get_resource_path("Resource/icon/setting.png")))
         self.removeItemBtn.setIcon(QIcon(Data.get_resource_path("Resource/icon/remove.png")))
         self.openFileBtn.setIcon(QIcon(Data.get_resource_path("Resource/icon/file.png")))
-        self.analysisBtn.setIcon(QIcon(Data.get_resource_path("Resource/icon/log.png")))
+        self.analysisBtn.setIcon(QIcon(Data.get_resource_path("Resource/icon/analysis.png")))
         self.startGameBtn.setIcon(QIcon(Data.get_resource_path("Resource/icon/start.png")))
         self.exportBtn.setIcon(QIcon(Data.get_resource_path("Resource/icon/export.png")))
         self.syncBtn.setIcon(QIcon(Data.get_resource_path("Resource/icon/sync.png")))
+        self.mapperBtn.setIcon(QIcon(Data.get_resource_path("Resource/icon/swap.png")))
 
     def __init_tips(self):
         """
@@ -310,10 +320,13 @@ class MainApp(object):
         """
         self.openFileBtn.setToolTip("选择数据存放目录")
         self.startGameBtn.setToolTip("执行背包圣遗物扫描")
+        self.exportBtn.setToolTip("导出背包数据到Excel")
+        self.syncBtn.setToolTip("同步官方角色、圣遗物数据以及重置扫描圣遗物数据")
         self.addItemBtn.setToolTip("添加列表需要执行的任务")
         # self.settingItemBtn.setToolTip("修改选中任务内容以及次数")
         self.removeItemBtn.setToolTip("对选中任务进行移除")
         self.analysisBtn.setToolTip("进行圣遗物推荐分析")
+        self.mapperBtn.setToolTip("对识别不精确的文字进行正常文字映射")
 
     def open_file(self):
         """
@@ -509,7 +522,7 @@ class MainApp(object):
         self.tableWidget.setObjectName(u"tableView")
         self.tableWidget.setGeometry(QRect(180, 50, Constant.window_width - 340, 240))
         # 禁止编辑单元格
-        self.tableWidget.setEditTriggers(QTableWidget.NoEditTriggers)
+        # self.tableWidget.setEditTriggers(QTableWidget.NoEditTriggers)
         # 单元格自适应
         self.tableWidget.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
         # 最后一列铺满
@@ -666,6 +679,17 @@ def show_analysis():
     sub_window.exec()
 
 
+def show_mapper():
+    """
+    打开映射界面
+    """
+    sub_window = SubMapperWindow()
+    # 设置为模态对话框
+    sub_window.setModal(True)
+    sub_window.exec()
+    sub_window.refreshTableCache()
+
+
 class SubLogWindow(QDialog):
 
     def __init__(self):
@@ -714,10 +738,10 @@ class SubAnalysisWindow(QDialog):
         self.exportDialogBtn.setObjectName(u"exportDialogBtn")
         self.exportDialogBtn.clicked.connect(lambda: self.export_analysis_data())
         self.exportDialogBtn.setText(QCoreApplication.translate("MainWindow", "导出", None))
+        self.exportDialogBtn.setEnabled(True)
         btnLayout.addWidget(self.exportDialogBtn)
         layout.addLayout(btnLayout)
         # 解禁按钮
-        self.exportDialogBtn.setEnabled(True)
         BtnCss.blue(self.analysisDialogBtn)
         BtnCss.gray(self.exportDialogBtn)
 
@@ -783,6 +807,162 @@ class SubAnalysisWindow(QDialog):
         """
         self.progress_dialog.close()
         QMessageBox.information(self, '提示', '数据导出完毕', QMessageBox.Ok)
+
+
+class SubMapperWindow(QDialog):
+
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("识别映射配置")
+        self.setFixedSize(300, 400)
+
+        layout = QVBoxLayout()
+        self.tableWidget = QTableWidget(self)
+        self.tableWidget.setObjectName(u"mapperTableView")
+        self.tableWidget.setGeometry(QRect(180, 50, 300, 240))
+        # 禁止编辑单元格
+        self.tableWidget.setEditTriggers(QTableWidget.NoEditTriggers)
+        # 单元格自适应
+        self.tableWidget.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
+        # 最后一列铺满
+        self.tableWidget.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        # 选中整行
+        self.tableWidget.setSelectionBehavior(QTableWidget.SelectRows)
+        self.tableWidget.setSelectionMode(QTableWidget.SingleSelection)
+        self.tableWidget.setMouseTracking(True)
+        self.tableData = Data.settings.value("mapper_table_data", None)
+
+        # 数据
+        column_count = len(Data.mapper_table_heads)
+        self.tableWidget.setColumnCount(column_count)
+        self.tableWidget.setHorizontalHeaderLabels(Data.mapper_table_heads)
+        layout.addWidget(self.tableWidget)
+        if self.tableData is not None:
+            self.addTableItem(self.tableData, rowCount=(len(self.tableData) // column_count))
+
+        # 区域
+        # self.groupBox = QGroupBox(self)
+        # self.groupBox.setObjectName(u"groupBox")
+        # self.groupBox.setFixedHeight(50)
+        # layout.addWidget(self.groupBox)
+
+        # 按钮
+        btnLayout = QHBoxLayout()
+        self.addItemDialogBtn = QPushButton()
+        self.addItemDialogBtn.setObjectName(u"addItemDialogBtn")
+        self.addItemDialogBtn.setGeometry(QRect(15, 5, 80, 40))
+        self.addItemDialogBtn.clicked.connect(lambda: self.addTableItem())
+        self.addItemDialogBtn.setText(QCoreApplication.translate("MainWindow", "添加", None))
+        btnLayout.addWidget(self.addItemDialogBtn)
+
+        self.removeItemDialogBtn = QPushButton()
+        self.removeItemDialogBtn.setObjectName(u"removeItemDialogBtn")
+        self.removeItemDialogBtn.setGeometry(QRect(160, 5, 80, 40))
+        self.removeItemDialogBtn.clicked.connect(lambda: self.removeTableItem())
+        self.removeItemDialogBtn.setText(QCoreApplication.translate("MainWindow", "移除", None))
+        btnLayout.addWidget(self.removeItemDialogBtn)
+
+        BtnCss.blue(self.addItemDialogBtn)
+        BtnCss.red(self.removeItemDialogBtn)
+
+        layout.addLayout(btnLayout)
+        self.setLayout(layout)
+
+    def addTableItem(self, data=None, rowCount=1):
+        """
+        添加表格数据
+        :param data 数据
+        :param rowCount 添加数据行数
+        """
+        # 无数据则弹窗填入
+        if data is None:
+            form_dialog = FormDialog()
+            form_dialog.exec_()
+            data = form_dialog.submitData
+
+        if not data:
+            # 未输入则终止后续执行
+            return
+
+        # 根据上一次行数进行计算
+        start_row_count = self.tableWidget.rowCount()
+        for rowIndex in range(rowCount):
+            self.tableWidget.insertRow(self.tableWidget.rowCount())
+            for columnIndex in range(len(Data.mapper_table_heads)):
+                item = QTableWidgetItem(data[rowIndex * len(Data.mapper_table_heads) + columnIndex])
+                # 设置数据居中
+                item.setTextAlignment(Qt.AlignCenter)
+                # 拼接到上一次行数后面
+                self.tableWidget.setItem(start_row_count + rowIndex, columnIndex, item)
+
+    def removeTableItem(self):
+        """
+        移除表格数据
+        :return:
+        """
+        select_item = self.tableWidget.selectedItems()
+        if not select_item:
+            QMessageBox.information(self, '提示', '未选中数据', QMessageBox.Ok)
+            return
+
+        self.tableWidget.removeRow(select_item[0].row())
+
+    def refreshTableCache(self):
+        """
+        刷新表格缓存数据
+        """
+        # 获取表格的行数和列数
+        rows = self.tableWidget.rowCount()
+        cols = self.tableWidget.columnCount()
+        # 创建一个空列表来存储所有数据
+        all_data = []
+
+        # 遍历表格的每一行和每一列，获取单元格数据
+        for row in range(rows):
+            for col in range(cols):
+                item = self.tableWidget.item(row, col)
+                if item is None:
+                    continue
+                all_data.append(item.text())
+
+        Data.settings.setValue("mapper_table_data", all_data)
+
+
+class FormDialog(QDialog):
+    def __init__(self):
+        super().__init__()
+        self.submitData = []
+        self.setWindowTitle("添加识别映射")
+
+        layout = QVBoxLayout()
+
+        label = QLabel("属性：")
+        self.combobox = QComboBox()
+        self.combobox.addItems(Data.entry_list)
+
+        layout.addWidget(label)
+        layout.addWidget(self.combobox)
+
+        label = QLabel("映射文本：")
+        self.text_input = QLineEdit()
+
+        layout.addWidget(label)
+        layout.addWidget(self.text_input)
+
+        # 添加提交按钮
+        submit_button = QPushButton("提交")
+        submit_button.clicked.connect(self.submit_form)
+        layout.addWidget(submit_button)
+
+        self.setLayout(layout)
+
+        BtnCss.blue(submit_button)
+
+    def submit_form(self):
+        selected_item = self.combobox.currentText()
+        text_input_value = self.text_input.text()
+        self.submitData = [selected_item, text_input_value]
+        self.close()
 
 
 def show_update_log():
