@@ -325,7 +325,7 @@ class MainApp(object):
         # self.settingItemBtn.setToolTip("修改选中任务内容以及次数")
         self.removeItemBtn.setToolTip("对选中任务进行移除")
         self.analysisBtn.setToolTip("进行圣遗物推荐分析")
-        self.mapperBtn.setToolTip("对识别不精确的文字进行正常文字映射")
+        self.mapperBtn.setToolTip("对识别不精确的文字进行正常文字映射(使用 * 标记的词条)")
 
     def open_file(self):
         """

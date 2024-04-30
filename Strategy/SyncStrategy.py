@@ -133,6 +133,7 @@ def match_text(text, position_info):
                 if mapper_dict.get(entry) is not None:
                     entry = mapper_dict.get(entry)
                 else:
+                    entry = "(*)" + entry
                     unknown_list.add(entry)
                     print("未识别：", text)
             # 处理正则数据
