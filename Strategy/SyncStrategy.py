@@ -4,7 +4,6 @@ import os
 import re
 
 import cv2
-import numpy as np
 from PySide6.QtCore import QThread, Signal
 
 import Utils.Constant as Constant
@@ -14,8 +13,11 @@ from Utils.FileUtils import FileOper
 
 entry_list = ["防御力", "暴击率", "暴击伤害", "生命值", "攻击力", "元素精通",
               "元素充能效率", "岩元素伤害加成", "水元素伤害加成", "草元素伤害加成", "冰元素伤害加成",
-              "物理伤害加成", "雷元素伤害加成", "火元素伤害加成", "风元素伤害加成", '治疗加成']
-'''词条列表'''
+              "物理伤害加成", "雷元素伤害加成", "火元素伤害加成", "风元素伤害加成", '治疗加成', ""]
+'''词条列表(最后一个留空处理无法匹配的数据)'''
+
+unknown_list = set()
+"""未知字段"""
 
 
 class SyncJob(QThread):
@@ -53,6 +55,8 @@ class SyncJob(QThread):
 
         self.analysis_artifact_data()
         self.statusOut.emit("数据同步完成")
+        if unknown_list:
+            self.statusOut.emit(f"存在错误识别文字：{unknown_list}")
         self.refreshOut.emit()
 
     def analysis_artifact_data(self):
@@ -119,6 +123,12 @@ def match_text(text, position_info):
             pattern_result = re.search(pattern, text)
             if pattern_result is None:
                 return entry
+            # 未识别处理
+            if entry == "":
+                # 使用正则表达式去掉符号和数字
+                entry = re.sub(r'[^\w\s]|\d', '', text)
+                unknown_list.add(entry)
+                print("未识别：", text)
             # 处理正则数据
             attr_value = pattern_result.group(1)
             if "%" in text:
@@ -156,21 +166,23 @@ if __name__ == '__main__':
     # json1['test'] = data1
     # print(json1)
     # print(re.search("", "测试").group(1))
-    ori_image = cv2.imread("../test/artifact-77.jpg")
+    ori_image = cv2.imread("../test/artifact-141.jpg")
     gray_img = cv2.cvtColor(ori_image, cv2.COLOR_BGR2GRAY)
-    adjusted_img = cv2.convertScaleAbs(gray_img, alpha=1.2, beta=30)
+    # adjusted_img = cv2.convertScaleAbs(gray_img, alpha=1.2, beta=30)
     # 对调整后的图像进行反色处理
-    # image = cv2.bitwise_not(adjusted_img)
+    image = cv2.bitwise_not(gray_img)
 
     position_info = entry_position_dict["children_tag_4"]
-    img = adjusted_img[position_info['left_top'][1]:position_info['right_bottom'][1],
+    img = image[position_info['left_top'][1]:position_info['right_bottom'][1],
           position_info['left_top'][0]:position_info['right_bottom'][0]]
-    cv2.imshow("title", img)
-    cv2.waitKey(0)
-    from cnocr import CnOcr
+    # cv2.imshow("title", img)
+    # cv2.waitKey(0)
+    # from cnocr import CnOcr
+    #
+    # ocr = CnOcr()
+    # info = ocr.ocr_for_single_line(img)
+    # print(info)
 
-    ocr = CnOcr()
-    info = ocr.ocr_for_single_line(img)
-    print(info)
-
-    # print(match_text("攻击力+11.1%", entry_position_dict['children_tag_1']))
+    print(match_text('·攻击办+11.1%', entry_position_dict['children_tag_1']))
+    print(match_text('·测试+11.1%', entry_position_dict['children_tag_1']))
+    print(unknown_list)
