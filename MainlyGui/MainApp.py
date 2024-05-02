@@ -505,16 +505,27 @@ class MainApp(object):
         """
         初始化面板数据部分
         """
+        # 初始化角色 / 圣遗物数据
+        role_list = Data.settings.value("role_list")
+        if not role_list:
+            role_list = Data.get_role_list()
+            name_list = [item['name'] for item in role_list]
+            Data.settings.setValue("role_list", name_list)
+
+        artifact_list = Data.settings.value("artifact_list")
+        if not artifact_list:
+            artifact_list = Data.get_artifact_list()
+            Data.settings.setValue("artifact_list", artifact_list)
+
         # 列表选项框
         self.listView = QListView(self.groupBox)
         self.listView.setObjectName(u"listView")
         self.listView.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.listView.setGeometry(QRect(15, 50, 141, 240))
-        role_list = Data.settings.value("role_list")
-        if role_list:
-            model = QStringListModel()
-            model.setStringList(role_list)
-            self.listView.setModel(model)
+        # 加载数据
+        model = QStringListModel()
+        model.setStringList(role_list)
+        self.listView.setModel(model)
 
         # 执行表格
         self.tableWidget = QTableWidget(self.groupBox)

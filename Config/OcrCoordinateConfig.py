@@ -27,7 +27,8 @@ entry_position_dict = {
         "name": "主属性",
         "left_top": (20, 120),
         "right_bottom": (250, 150),
-        "pattern": r'\b0\b'  # 随便写个，无需匹配
+        "pattern": r'\b0\b',  # 随便写个，无需匹配
+        "mapper": True
     },
     "main_tag_value": {
         "name": "主属性值",
@@ -46,33 +47,38 @@ entry_position_dict = {
         "name": "词条1",
         "left_top": (20, 290),
         "right_bottom": (250, 325),
-        "pattern": r'(\d+(\.\d+)?)'
+        "pattern": r'(\d+(\.\d+)?)',
+        "mapper": True
     },
     "children_tag_2": {
         "name": "词条2",
         "left_top": (20, 325),
         "right_bottom": (250, 365),
-        "pattern": r'(\d+(\.\d+)?)'
+        "pattern": r'(\d+(\.\d+)?)',
+        "mapper": True
     },
     "children_tag_3": {
         "name": "词条3",
         "left_top": (20, 355),
         "right_bottom": (250, 395),
-        "pattern": r'(\d+(\.\d+)?)'
+        "pattern": r'(\d+(\.\d+)?)',
+        "mapper": True
     },
     "children_tag_4": {
         "name": "词条4/套装",
         "left_top": (20, 385),
         "right_bottom": (250, 425),
         "pattern": r'(\d+(\.\d+)?)',
-        "replace": "："
+        "replace": "：",
+        "mapper": True
     },
     "main_name": {
         "name": "套装/未知",
         "left_top": (20, 425),
         "right_bottom": (250, 455),
         "replace": "：",
-        "check_data": "artifact_list"
+        "check_data": "artifact_list",
+        "mapper": True
     },
     "equip_role": {
         "name": "装备角色",

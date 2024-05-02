@@ -89,7 +89,7 @@ def export_artifact_data(data_list):
     target_dir = FileOper.get_dir(f"{config_dir}/{out_dir}")
 
     # 将工作簿保存到磁盘
-    wb.save(f'{target_dir}/圣遗物数据.xlsx')
+    wb.save(f'{target_dir}/背包圣遗物数据.xlsx')
     FileOper.open_dir(target_dir)
 
 

@@ -37,7 +37,7 @@ class AnalysisJob(QThread):
             self.analysis_artifact_data()
             self.appendOut.emit("<span style='color: rgb(86, 177, 110);'>分析完毕...</span>")
         except Exception as e:
-            print(e)
+            traceback.print_exc()
             self.appendOut.emit("<span style='color: rgb(86, 177, 110);'>分析异常，终止</span>")
         self.finishOut.emit()
 
@@ -221,7 +221,7 @@ class AnalysisJob(QThread):
 
         # 强化未满级/词条未歪
         if len(commend_up_list) == 0:
-            self.appendOut.emit(f"<span style='color: rgb(86, 177, 110);'>^_^无潜力装备圣遗物，+0 可以全部清理</span>")
+            self.appendOut.emit(f"<span style='color: rgb(86, 177, 110);'>^_^无潜力装备圣遗物，强化过的装备可以全部清理</span>")
         for commend_info in commend_up_list:
             self.appendOut.emit(
                 f"<span style='color: rgb(86, 177, 110);'>建议角色：</span>"

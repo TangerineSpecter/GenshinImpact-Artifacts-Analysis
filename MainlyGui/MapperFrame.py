@@ -141,7 +141,10 @@ class FormDialog(QDialog):
 
         label = QLabel("属性：")
         self.combobox = QComboBox()
-        self.combobox.addItems(Data.entry_list)
+        select_list = []
+        select_list.extend(Data.entry_list)
+        select_list.extend(Data.artifact_name_list)
+        self.combobox.addItems(select_list)
 
         layout.addWidget(label)
         layout.addWidget(self.combobox)
