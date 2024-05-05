@@ -9,6 +9,7 @@ from PySide6.QtCore import QThread, Signal
 import Config.LoggingConfig as Logging
 import Utils.Constant as Constant
 import Utils.DataUtils as Data
+from Utils.FileUtils import FileOper
 
 if platform.system() == 'Windows':
     import win32gui
@@ -103,6 +104,10 @@ class Strategy(QThread):
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
 
+        # 记录当前目录下文件总数
+        cur_file_count = len(os.listdir(folder_path))
+        print("当前文件夹存在文件数：", cur_file_count)
+
         # 开始识别
         start = time.time()
         total_count = 0
@@ -140,14 +145,11 @@ class Strategy(QThread):
             pyautogui.mouseUp(button='left')
         print(f"执行完毕，扫描总数：{total_count}，耗时：{time.time() - start}")
 
-        # 策略分发
-        # dis = DistributeStrategy()
-        # context = Context(dis, self.statusOut)
-        # result = context.execute_strategy(self.tableData[self.row_index])
-
-        # if not result:
-        #     Logging.error("策略执行失败，跳过此次执行")
-        #     return
+        # 如果扫描结果比之前少，则清理掉多余的文件
+        if total_count < cur_file_count:
+            for index in range(total_count + 1, cur_file_count + 1):
+                FileOper.delete_file(f"{folder_path}/artifact-{index}.jpg")
+                print(f"删除文件,{folder_path}/artifact-{index}.jpg")
 
 
 def check_process_exists():
@@ -159,3 +161,8 @@ def check_process_exists():
         if proc.info['name'] == Constant.app_name:
             return True
     return False
+
+
+if __name__ == '__main__':
+    for index in range(1700, 1751):
+        print(index)

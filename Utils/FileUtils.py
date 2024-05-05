@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import platform
 import subprocess
@@ -114,6 +115,18 @@ class FileOper:
             template = f"<span style='font-size:14px;'>{log}</span>"
             result.append(template)
         return "".join(result)
+
+    @staticmethod
+    def delete_file(file_path):
+        """
+        删除指定路径文件
+        :param file_path: 文件路径（包含文件名）
+        """
+        try:
+            os.remove(file_path)
+            # 或者使用 os.unlink(file_path)
+        except OSError as e:
+            Logging.error("文件删除失败，路径：", file_path)
 
     @staticmethod
     def open_dir(dir_path):
