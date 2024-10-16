@@ -38,7 +38,9 @@ entry_list = ["防御力", "暴击率", "暴击伤害", "生命值", "攻击力"
               "物理伤害加成", "雷元素伤害加成", "火元素伤害加成", "风元素伤害加成", '治疗加成']
 '''识别词条列表'''
 
-artifact_name_list = [item['name'] for item in settings.value("artifact_list")]
+artifact_list = settings.value("artifact_list")
+if artifact_list is not None:
+    artifact_name_list = [item['name'] for item in artifact_list]
 '''圣遗物套装列表'''
 
 tag_dict = {
